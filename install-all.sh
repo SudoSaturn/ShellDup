@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #
 # install-all.sh
@@ -64,7 +63,7 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-echo -e "${CYAN}[1/14]${NC} Checking prerequisites..."
+echo -e "${CYAN}[1/15]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
     echo -e "${RED}Error: git is not installed${NC}"
     echo "Install with: xcode-select --install"
@@ -78,7 +77,7 @@ fi
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
-echo -e "${CYAN}[2/14]${NC} Cloning ShellDup repository..."
+echo -e "${CYAN}[2/15]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
 git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
@@ -92,7 +91,7 @@ if [ ! -d "$KITTY_DIR" ]; then
 fi
 
 echo ""
-echo -e "${CYAN}[3/14]${NC} Cloning .github directory from official kitty repository..."
+echo -e "${CYAN}[3/15]${NC} Cloning .github directory from official kitty repository..."
 rm -rf "$KITTY_TEMP_DIR"
 mkdir -p "$KITTY_TEMP_DIR"
 cd "$KITTY_TEMP_DIR"
@@ -121,12 +120,12 @@ echo -e "${GREEN}✓${NC} .github directory added"
 cd "$KITTY_DIR" || exit 1
 
 echo ""
-echo -e "${CYAN}[4/14]${NC} Cleaning build directory..."
+echo -e "${CYAN}[4/15]${NC} Cleaning build directory..."
 rm -rf build dependencies kitty.app 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Cleaned"
 
 echo ""
-echo -e "${CYAN}[5/14]${NC} Downloading dependencies (may take several minutes)..."
+echo -e "${CYAN}[5/15]${NC} Downloading dependencies (may take several minutes)..."
 ./dev.sh deps &>/dev/null || {
     echo -e "${RED}Error: Failed to download dependencies${NC}"
     exit 1
@@ -134,7 +133,7 @@ echo -e "${CYAN}[5/14]${NC} Downloading dependencies (may take several minutes).
 echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
 echo ""
-echo -e "${CYAN}[6/14]${NC} Building kitty (may take several minutes)..."
+echo -e "${CYAN}[6/15]${NC} Building kitty (may take several minutes)..."
 ./dev.sh build &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty${NC}"
     exit 1
@@ -142,7 +141,7 @@ echo -e "${CYAN}[6/14]${NC} Building kitty (may take several minutes)..."
 echo -e "${GREEN}✓${NC} Kitty built"
 
 echo ""
-echo -e "${CYAN}[7/14]${NC} Installing documentation dependencies..."
+echo -e "${CYAN}[7/15]${NC} Installing documentation dependencies..."
 ./dev.sh deps --for-docs &>/dev/null || {
     echo -e "${RED}Error: Failed to install doc dependencies${NC}"
     exit 1
@@ -150,14 +149,14 @@ echo -e "${CYAN}[7/14]${NC} Installing documentation dependencies..."
 echo -e "${GREEN}✓${NC} Doc dependencies installed"
 
 echo ""
-echo -e "${CYAN}[8/14]${NC} Setting up sphinx tools..."
+echo -e "${CYAN}[8/15]${NC} Setting up sphinx tools..."
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
 echo ""
-echo -e "${CYAN}[9/14]${NC} Building documentation..."
+echo -e "${CYAN}[9/15]${NC} Building documentation..."
 ./dev.sh docs &>/dev/null || {
     echo -e "${RED}Error: Failed to build documentation${NC}"
     exit 1
@@ -165,7 +164,7 @@ echo -e "${CYAN}[9/14]${NC} Building documentation..."
 echo -e "${GREEN}✓${NC} Documentation built"
 
 echo ""
-echo -e "${CYAN}[10/14]${NC} Building macOS app bundle..."
+echo -e "${CYAN}[10/15]${NC} Building macOS app bundle..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -190,7 +189,31 @@ setup.py kitty.app &>/dev/null || {
 echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
-echo -e "${CYAN}[11/14]${NC} Installing to /Applications..."
+echo -e "${CYAN}[11/15]${NC} Fixing library paths in app bundle..."
+# Create lib directory inside the app bundle
+mkdir -p kitty.app/Contents/Frameworks
+
+# Copy all required dylibs into the app
+cp -r dependencies/darwin-arm64/lib/*.dylib kitty.app/Contents/Frameworks/ 2>/dev/null || true
+
+# Fix library paths using install_name_tool
+KITTY_BINARY="kitty.app/Contents/MacOS/kitty"
+for lib in kitty.app/Contents/Frameworks/*.dylib; do
+    lib_name=$(basename "$lib")
+    # Change the library path in the binary to use @executable_path
+    sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$lib_name" "@executable_path/../Frameworks/$lib_name" "$KITTY_BINARY" 2>/dev/null || true
+    # Fix the library's own id
+    sudo install_name_tool -id "@executable_path/../Frameworks/$lib_name" "$lib" 2>/dev/null || true
+    # Fix dependencies within the library itself
+    for dep in kitty.app/Contents/Frameworks/*.dylib; do
+        dep_name=$(basename "$dep")
+        sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$dep_name" "@executable_path/../Frameworks/$dep_name" "$lib" 2>/dev/null || true
+    done
+done
+echo -e "${GREEN}✓${NC} Library paths fixed"
+
+echo ""
+echo -e "${CYAN}[12/15]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
@@ -201,25 +224,33 @@ sudo mv kitty.app /Applications/ || {
 echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
-echo -e "${CYAN}[12/14]${NC} Signing the app (ad-hoc signature)..."
-sudo codesign --force --deep --sign - /Applications/kitty.app &>/dev/null || {
-    echo -e "${YELLOW}Warning: Failed to sign app, trying to remove quarantine attribute...${NC}"
-}
-sudo xattr -cr /Applications/kitty.app &>/dev/null || {
-    echo -e "${YELLOW}Warning: Failed to remove quarantine attribute${NC}"
-}
-echo -e "${GREEN}✓${NC} App signed"
+echo -e "${CYAN}[13/15]${NC} Removing Gatekeeper restrictions..."
+sudo xattr -cr /Applications/kitty.app 2>/dev/null || true
+sudo xattr -d com.apple.quarantine /Applications/kitty.app 2>/dev/null || true
+sudo codesign --force --deep --sign - /Applications/kitty.app 2>/dev/null || true
+sudo spctl --add --label "kitty" /Applications/kitty.app 2>/dev/null || true
+sudo spctl --enable --label "kitty" 2>/dev/null || true
+echo -e "${GREEN}✓${NC} Gatekeeper restrictions removed"
 
 echo ""
-echo -e "${CYAN}[13/14]${NC} Running setup script..."
+echo -e "${CYAN}[14/15]${NC} Cleaning up kitty build files..."
+cd "$SHELLDUP_DIR" || exit 1
+rm -rf "$KITTY_DIR"
+echo -e "${GREEN}✓${NC} Build files cleaned"
+
+echo ""
+echo -e "${CYAN}[15/15]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
     echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
+    echo -e "${YELLOW}Repository contents:${NC}"
+    ls -la "$SHELLDUP_DIR"
     exit 1
 fi
-bash setup-duplicate.sh &>/dev/null || {
-    echo -e "${RED}Error: Failed to run setup-duplicate.sh${NC}"
+
+if ! bash setup-duplicate.sh; then
+    echo -e "${RED}Error: setup-duplicate.sh failed${NC}"
     exit 1
-}
+fi
 echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
