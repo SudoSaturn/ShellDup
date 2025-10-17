@@ -41,7 +41,7 @@ brew install --quiet \
     lazydocker \
     nali \
     aria2 \
-    dog \
+    apidog \
     httpie \
     nmap \
     telnet \
