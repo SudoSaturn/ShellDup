@@ -81,7 +81,6 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-
 TOTAL_STEPS=11
 
 # Check prerequisites
@@ -100,16 +99,32 @@ fi
 # Clone ShellDup repository
 show_progress 2 $TOTAL_STEPS ""
 rm -rf "$SHELLDUP_DIR"
-git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null
+if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to clone ShellDup repository${NC}"
+    exit 1
+fi
+
+# Verify kitty directory exists
+if [ ! -d "$KITTY_DIR" ]; then
+    echo -e "\n${RED}Error: kitty directory not found in ShellDup repository${NC}"
+    exit 1
+fi
+
 cd "$KITTY_DIR"
 
 # Build kitty
 show_progress 3 $TOTAL_STEPS ""
-./dev.sh build &>/dev/null
+if ! ./dev.sh build &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to build kitty${NC}"
+    exit 1
+fi
 
 # Install documentation dependencies
 show_progress 4 $TOTAL_STEPS ""
-./dev.sh deps --for-docs &>/dev/null
+if ! ./dev.sh deps --for-docs &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to install documentation dependencies${NC}"
+    exit 1
+fi
 
 # Setup sphinx tools
 show_progress 5 $TOTAL_STEPS ""
@@ -119,7 +134,10 @@ ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencie
 
 # Build documentation
 show_progress 6 $TOTAL_STEPS ""
-./dev.sh docs &>/dev/null
+if ! ./dev.sh docs &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to build documentation${NC}"
+    exit 1
+fi
 
 # Apply setup.py fix and build app
 show_progress 7 $TOTAL_STEPS ""
@@ -136,11 +154,14 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
 ' setup.py
 fi
 rm -rf kitty.app
-DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
+if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app &>/dev/null
+setup.py kitty.app &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to build kitty.app${NC}"
+    exit 1
+fi
 
 # Install to /Applications
 show_progress 8 $TOTAL_STEPS ""
@@ -156,18 +177,28 @@ rm -rf "$KITTY_DIR"
 
 # Run the setup script
 show_progress 10 $TOTAL_STEPS ""
-bash setup-duplicate.sh &>/dev/null
+if [ ! -f "setup-duplicate.sh" ]; then
+    echo -e "\n${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
+    exit 1
+fi
 
-# Cleanup ShellDup temporary directory
+if ! bash setup-duplicate.sh &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to run setup-duplicate.sh${NC}"
+    exit 1
+fi
+
+# Cleanup ShellDup temporary directory before changing directory
 show_progress 11 $TOTAL_STEPS ""
-cd /
+cd "$HOME"
 rm -rf "$SHELLDUP_DIR"
 
 clear
 echo ""
 echo ""
-echo "Installation complete!"
+echo -e "${GREEN}Installation complete!${NC}"
 echo ""
-read -p "Press Enter to apply changes..."
-source ~/.zshrc
+echo -e "${YELLOW}Important: Run the following command to apply changes:${NC}"
+echo -e "${CYAN}source ~/.zshrc${NC}"
+echo ""
+echo "Or simply restart your terminal."
 echo ""
