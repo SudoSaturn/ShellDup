@@ -3,6 +3,9 @@
 # install-all.sh
 # Complete setup installer: kitty terminal + full environment configuration
 #
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-all.sh | bash
+#
 
 set -e  # Exit on error
 
@@ -30,13 +33,22 @@ echo "you need sudo access to run this"
 echo ""
 sudo -v
 echo ""
+
+# Clean any existing kitty builds in current user's home directory
+if [ -d "$HOME/kitty" ]; then
+    echo -e "${YELLOW}Found existing kitty directory in home folder. Removing...${NC}"
+    rm -rf "$HOME/kitty"
+    echo -e "${GREEN}✓${NC} Cleaned home directory"
+fi
+
+echo ""
 echo "BE PATIENT! this might take a while"
 echo ""
 
 # Keep sudo alive in the background
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-# Configuration
+# Configuration - all dynamic, no hardcoded paths
 SHELLDUP_REPO_URL="https://github.com/sudosaturn/ShellDup.git"
 SHELLDUP_BRANCH="main"
 SHELLDUP_DIR="/tmp/shelldup-$$"
@@ -66,64 +78,46 @@ echo -e "${GREEN}✓${NC} Prerequisites OK"
 echo ""
 echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
-if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" 2>&1; then
+git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} Repository cloned"
 
-# Verify kitty directory exists
 if [ ! -d "$KITTY_DIR" ]; then
-    echo -e "${RED}Error: kitty directory not found${NC}"
+    echo -e "${RED}Error: kitty directory not found in ShellDup repository${NC}"
     exit 1
 fi
 
-cd "$KITTY_DIR"
+cd "$KITTY_DIR" || exit 1
 
-# Clean any existing builds
 echo ""
-echo -e "${CYAN}[3/12]${NC} Cleaning previous builds..."
+echo -e "${CYAN}[3/12]${NC} Cleaning build directory..."
 rm -rf build dependencies kitty.app 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Cleaned"
 
 echo ""
-echo -e "${CYAN}[4/12]${NC} Downloading kitty dependencies..."
-echo -e "${YELLOW}This may take several minutes. Output below:${NC}"
-echo ""
-if ! ./dev.sh deps; then
-    echo ""
-    echo -e "${RED}===========================================${NC}"
-    echo -e "${RED}Failed to download dependencies${NC}"
-    echo -e "${RED}===========================================${NC}"
-    echo ""
-    echo -e "${YELLOW}Common causes:${NC}"
-    echo "1. Network connectivity issues"
-    echo "2. GitHub rate limiting"
-    echo "3. Missing system dependencies"
-    echo ""
-    echo -e "${YELLOW}Troubleshooting:${NC}"
-    echo "1. Check your internet connection"
-    echo "2. Try running manually: cd $KITTY_DIR && ./dev.sh deps"
-    echo "3. Check if you can access: https://github.com"
+echo -e "${CYAN}[4/12]${NC} Downloading dependencies (may take several minutes)..."
+./dev.sh deps &>/dev/null || {
+    echo -e "${RED}Error: Failed to download dependencies${NC}"
     exit 1
-fi
-echo ""
+}
 echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
 echo ""
-echo -e "${CYAN}[5/12]${NC} Building kitty..."
-if ! ./dev.sh build 2>&1; then
+echo -e "${CYAN}[5/12]${NC} Building kitty (may take several minutes)..."
+./dev.sh build &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} Kitty built"
 
 echo ""
 echo -e "${CYAN}[6/12]${NC} Installing documentation dependencies..."
-if ! ./dev.sh deps --for-docs 2>&1; then
+./dev.sh deps --for-docs &>/dev/null || {
     echo -e "${RED}Error: Failed to install doc dependencies${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} Doc dependencies installed"
 
 echo ""
@@ -135,10 +129,10 @@ echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
 echo ""
 echo -e "${CYAN}[8/12]${NC} Building documentation..."
-if ! ./dev.sh docs 2>&1; then
+./dev.sh docs &>/dev/null || {
     echo -e "${RED}Error: Failed to build documentation${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} Documentation built"
 
 echo ""
@@ -156,14 +150,14 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
 ' setup.py
 fi
 rm -rf kitty.app
-if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
+DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app 2>&1; then
+setup.py kitty.app &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty.app${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
@@ -171,30 +165,33 @@ echo -e "${CYAN}[10/12]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
-sudo mv kitty.app /Applications/
+sudo mv kitty.app /Applications/ || {
+    echo -e "${RED}Error: Failed to install to /Applications${NC}"
+    exit 1
+}
 echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
 echo -e "${CYAN}[11/12]${NC} Cleaning up kitty build files..."
-cd "$SHELLDUP_DIR"
+cd "$SHELLDUP_DIR" || exit 1
 rm -rf "$KITTY_DIR"
 echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
 echo -e "${CYAN}[12/12]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
-    echo -e "${RED}Error: setup-duplicate.sh not found${NC}"
+    echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
     exit 1
 fi
-if ! bash setup-duplicate.sh 2>&1; then
+bash setup-duplicate.sh &>/dev/null || {
     echo -e "${RED}Error: Failed to run setup-duplicate.sh${NC}"
     exit 1
-fi
+}
 echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
-echo -e "${CYAN}[13/13]${NC} Final cleanup..."
-cd "$HOME"
+echo -e "${CYAN}Final cleanup...${NC}"
+cd "$HOME" || exit 1
 rm -rf "$SHELLDUP_DIR"
 echo -e "${GREEN}✓${NC} Cleanup complete"
 
