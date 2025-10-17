@@ -53,6 +53,7 @@ SHELLDUP_REPO_URL="https://github.com/sudosaturn/ShellDup.git"
 SHELLDUP_BRANCH="main"
 SHELLDUP_DIR="/tmp/shelldup-$$"
 KITTY_DIR="$SHELLDUP_DIR/kitty"
+KITTY_TEMP_DIR="/tmp/kitty-official-$$"
 
 # Allow override via environment variables
 if [ -n "$CUSTOM_SHELLDUP_REPO" ]; then
@@ -62,7 +63,7 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-echo -e "${CYAN}[1/12]${NC} Checking prerequisites..."
+echo -e "${CYAN}[1/13]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
     echo -e "${RED}Error: git is not installed${NC}"
     echo "Install with: xcode-select --install"
@@ -76,9 +77,9 @@ fi
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
-echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository (full clone, may take longer)..."
+echo -e "${CYAN}[2/13]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
-git clone --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
+git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
 }
@@ -89,15 +90,42 @@ if [ ! -d "$KITTY_DIR" ]; then
     exit 1
 fi
 
+echo ""
+echo -e "${CYAN}[3/13]${NC} Cloning .github directory from official kitty repository..."
+rm -rf "$KITTY_TEMP_DIR"
+mkdir -p "$KITTY_TEMP_DIR"
+cd "$KITTY_TEMP_DIR"
+
+# Clone with sparse checkout to get only .github directory
+git clone --filter=blob:none --sparse https://github.com/kovidgoyal/kitty.git . &>/dev/null || {
+    echo -e "${RED}Error: Failed to clone official kitty repository${NC}"
+    exit 1
+}
+git sparse-checkout set .github &>/dev/null || {
+    echo -e "${RED}Error: Failed to set sparse checkout${NC}"
+    exit 1
+}
+
+# Copy .github directory to ShellDup kitty directory
+cp -r .github "$KITTY_DIR/" || {
+    echo -e "${RED}Error: Failed to copy .github directory${NC}"
+    exit 1
+}
+
+# Clean up temporary kitty clone
+cd /tmp
+rm -rf "$KITTY_TEMP_DIR"
+echo -e "${GREEN}✓${NC} .github directory added"
+
 cd "$KITTY_DIR" || exit 1
 
 echo ""
-echo -e "${CYAN}[3/12]${NC} Cleaning build directory..."
+echo -e "${CYAN}[4/13]${NC} Cleaning build directory..."
 rm -rf build dependencies kitty.app 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Cleaned"
 
 echo ""
-echo -e "${CYAN}[4/12]${NC} Downloading dependencies (may take several minutes)..."
+echo -e "${CYAN}[5/13]${NC} Downloading dependencies (may take several minutes)..."
 ./dev.sh deps &>/dev/null || {
     echo -e "${RED}Error: Failed to download dependencies${NC}"
     exit 1
@@ -105,7 +133,7 @@ echo -e "${CYAN}[4/12]${NC} Downloading dependencies (may take several minutes).
 echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
 echo ""
-echo -e "${CYAN}[5/12]${NC} Building kitty (may take several minutes)..."
+echo -e "${CYAN}[6/13]${NC} Building kitty (may take several minutes)..."
 ./dev.sh build &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty${NC}"
     exit 1
@@ -113,7 +141,7 @@ echo -e "${CYAN}[5/12]${NC} Building kitty (may take several minutes)..."
 echo -e "${GREEN}✓${NC} Kitty built"
 
 echo ""
-echo -e "${CYAN}[6/12]${NC} Installing documentation dependencies..."
+echo -e "${CYAN}[7/13]${NC} Installing documentation dependencies..."
 ./dev.sh deps --for-docs &>/dev/null || {
     echo -e "${RED}Error: Failed to install doc dependencies${NC}"
     exit 1
@@ -121,14 +149,14 @@ echo -e "${CYAN}[6/12]${NC} Installing documentation dependencies..."
 echo -e "${GREEN}✓${NC} Doc dependencies installed"
 
 echo ""
-echo -e "${CYAN}[7/12]${NC} Setting up sphinx tools..."
+echo -e "${CYAN}[8/13]${NC} Setting up sphinx tools..."
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
 echo ""
-echo -e "${CYAN}[8/12]${NC} Building documentation..."
+echo -e "${CYAN}[9/13]${NC} Building documentation..."
 ./dev.sh docs &>/dev/null || {
     echo -e "${RED}Error: Failed to build documentation${NC}"
     exit 1
@@ -136,7 +164,7 @@ echo -e "${CYAN}[8/12]${NC} Building documentation..."
 echo -e "${GREEN}✓${NC} Documentation built"
 
 echo ""
-echo -e "${CYAN}[9/12]${NC} Building macOS app bundle..."
+echo -e "${CYAN}[10/13]${NC} Building macOS app bundle..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -161,7 +189,7 @@ setup.py kitty.app &>/dev/null || {
 echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
-echo -e "${CYAN}[10/12]${NC} Installing to /Applications..."
+echo -e "${CYAN}[11/13]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
@@ -172,13 +200,13 @@ sudo mv kitty.app /Applications/ || {
 echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
-echo -e "${CYAN}[11/12]${NC} Cleaning up kitty build files..."
+echo -e "${CYAN}[12/13]${NC} Cleaning up kitty build files..."
 cd "$SHELLDUP_DIR" || exit 1
 rm -rf "$KITTY_DIR"
 echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
-echo -e "${CYAN}[12/12]${NC} Running setup script..."
+echo -e "${CYAN}[13/13]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
     echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
     exit 1
