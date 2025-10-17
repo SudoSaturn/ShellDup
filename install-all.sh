@@ -211,13 +211,7 @@ sudo xattr -cr /Applications/kitty.app &>/dev/null || {
 echo -e "${GREEN}✓${NC} App signed"
 
 echo ""
-echo -e "${CYAN}[13/14]${NC} Cleaning up kitty build files..."
-cd "$SHELLDUP_DIR" || exit 1
-rm -rf "$KITTY_DIR"
-echo -e "${GREEN}✓${NC} Build files cleaned"
-
-echo ""
-echo -e "${CYAN}[14/14]${NC} Running setup script..."
+echo -e "${CYAN}[13/14]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
     echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
     exit 1
