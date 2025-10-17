@@ -81,7 +81,7 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-TOTAL_STEPS=11
+TOTAL_STEPS=12
 
 # Check prerequisites
 show_progress 1 $TOTAL_STEPS ""
@@ -99,58 +99,59 @@ fi
 # Clone ShellDup repository
 show_progress 2 $TOTAL_STEPS ""
 rm -rf "$SHELLDUP_DIR"
-echo -e "\n${CYAN}Cloning repository from: $SHELLDUP_REPO_URL${NC}"
-echo -e "${CYAN}Branch: $SHELLDUP_BRANCH${NC}"
-echo -e "${CYAN}Destination: $SHELLDUP_DIR${NC}"
-if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR"; then
+if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null; then
     echo -e "\n${RED}Error: Failed to clone ShellDup repository${NC}"
-    echo -e "${YELLOW}Troubleshooting steps:${NC}"
-    echo "1. Check if the repository exists: https://github.com/sudosaturn/ShellDup"
-    echo "2. Check if the branch '$SHELLDUP_BRANCH' exists"
-    echo "3. Check your internet connection"
-    echo "4. Try cloning manually: git clone $SHELLDUP_REPO_URL"
+    echo -e "${YELLOW}Troubleshooting:${NC}"
+    echo "1. Check repository exists: https://github.com/sudosaturn/ShellDup"
+    echo "2. Check branch '$SHELLDUP_BRANCH' exists"
+    echo "3. Check internet connection"
     exit 1
 fi
 
 # Verify kitty directory exists
 if [ ! -d "$KITTY_DIR" ]; then
     echo -e "\n${RED}Error: kitty directory not found in ShellDup repository${NC}"
-    echo -e "${YELLOW}Repository contents:${NC}"
-    ls -la "$SHELLDUP_DIR"
     exit 1
 fi
 
 cd "$KITTY_DIR"
 
-# Build kitty
+# Download all dependencies first (CRITICAL STEP)
 show_progress 3 $TOTAL_STEPS ""
-if ! ./dev.sh build; then
+if ! ./dev.sh deps &>/dev/null; then
+    echo -e "\n${RED}Error: Failed to download kitty dependencies${NC}"
+    exit 1
+fi
+
+# Build kitty
+show_progress 4 $TOTAL_STEPS ""
+if ! ./dev.sh build &>/dev/null; then
     echo -e "\n${RED}Error: Failed to build kitty${NC}"
     exit 1
 fi
 
 # Install documentation dependencies
-show_progress 4 $TOTAL_STEPS ""
-if ! ./dev.sh deps --for-docs; then
+show_progress 5 $TOTAL_STEPS ""
+if ! ./dev.sh deps --for-docs &>/dev/null; then
     echo -e "\n${RED}Error: Failed to install documentation dependencies${NC}"
     exit 1
 fi
 
 # Setup sphinx tools
-show_progress 5 $TOTAL_STEPS ""
+show_progress 6 $TOTAL_STEPS ""
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
 
 # Build documentation
-show_progress 6 $TOTAL_STEPS ""
-if ! ./dev.sh docs; then
+show_progress 7 $TOTAL_STEPS ""
+if ! ./dev.sh docs &>/dev/null; then
     echo -e "\n${RED}Error: Failed to build documentation${NC}"
     exit 1
 fi
 
 # Apply setup.py fix and build app
-show_progress 7 $TOTAL_STEPS ""
+show_progress 8 $TOTAL_STEPS ""
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -168,39 +169,37 @@ if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app; then
+setup.py kitty.app &>/dev/null; then
     echo -e "\n${RED}Error: Failed to build kitty.app${NC}"
     exit 1
 fi
 
 # Install to /Applications
-show_progress 8 $TOTAL_STEPS ""
+show_progress 9 $TOTAL_STEPS ""
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
 sudo mv kitty.app /Applications/
 
 # Cleanup kitty build files
-show_progress 9 $TOTAL_STEPS ""
+show_progress 10 $TOTAL_STEPS ""
 cd "$SHELLDUP_DIR"
 rm -rf "$KITTY_DIR"
 
 # Run the setup script
-show_progress 10 $TOTAL_STEPS ""
+show_progress 11 $TOTAL_STEPS ""
 if [ ! -f "setup-duplicate.sh" ]; then
     echo -e "\n${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
-    echo -e "${YELLOW}Repository contents:${NC}"
-    ls -la "$SHELLDUP_DIR"
     exit 1
 fi
 
-if ! bash setup-duplicate.sh; then
+if ! bash setup-duplicate.sh &>/dev/null; then
     echo -e "\n${RED}Error: Failed to run setup-duplicate.sh${NC}"
     exit 1
 fi
 
 # Cleanup ShellDup temporary directory before changing directory
-show_progress 11 $TOTAL_STEPS ""
+show_progress 12 $TOTAL_STEPS ""
 cd "$HOME"
 rm -rf "$SHELLDUP_DIR"
 
