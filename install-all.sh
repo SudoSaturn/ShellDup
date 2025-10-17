@@ -1,3 +1,4 @@
+
 #!/bin/bash
 #
 # install-all.sh
@@ -217,16 +218,15 @@ echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
 echo -e "${CYAN}[14/14]${NC} Running setup script..."
-if [ -f "cd .. && setup-duplicate.sh" ]; then
-    echo -e "${YELLOW}Found setup-duplicate.sh, executing...${NC}"
-    if bash setup-duplicate.sh; then
-        echo -e "${GREEN}✓${NC} Setup script completed successfully"
-    else
-        echo -e "${YELLOW}⚠${NC} Setup script encountered errors but continuing..."
-    fi
-else
-    echo -e "${YELLOW}⚠${NC} setup-duplicate.sh not found, skipping..."
+if [ ! -f "setup-duplicate.sh" ]; then
+    echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
+    exit 1
 fi
+bash setup-duplicate.sh &>/dev/null || {
+    echo -e "${RED}Error: Failed to run setup-duplicate.sh${NC}"
+    exit 1
+}
+echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
 echo -e "${CYAN}Final cleanup...${NC}"
@@ -241,12 +241,8 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Installation Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${YELLOW}Kitty has been successfully installed to /Applications/kitty.app${NC}"
+echo -e "${YELLOW}To apply changes, run:${NC}"
+echo -e "${CYAN}  source ~/.zshrc${NC}"
 echo ""
-if [ -f "$HOME/.zshrc" ]; then
-    echo -e "${YELLOW}To apply environment changes, run:${NC}"
-    echo -e "${CYAN}  source ~/.zshrc${NC}"
-    echo ""
-fi
 echo -e "${YELLOW}Or simply restart your terminal.${NC}"
 echo ""
