@@ -68,20 +68,12 @@ echo ""
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Configuration
-KITTY_REPO_URL="https://github.com/kovidgoyal/kitty.git"
-KITTY_BRANCH="master"
 SHELLDUP_REPO_URL="https://github.com/sudosaturn/ShellDup.git"
 SHELLDUP_BRANCH="main"
-KITTY_BUILD_DIR="/tmp/kitty-build-$$"
 SHELLDUP_DIR="/tmp/shelldup-$$"
+KITTY_DIR="$SHELLDUP_DIR/kitty"
 
 # Allow override via environment variables
-if [ -n "$CUSTOM_KITTY_REPO" ]; then
-    KITTY_REPO_URL="$CUSTOM_KITTY_REPO"
-fi
-if [ -n "$CUSTOM_KITTY_BRANCH" ]; then
-    KITTY_BRANCH="$CUSTOM_KITTY_BRANCH"
-fi
 if [ -n "$CUSTOM_SHELLDUP_REPO" ]; then
     SHELLDUP_REPO_URL="$CUSTOM_SHELLDUP_REPO"
 fi
@@ -95,21 +87,21 @@ TOTAL_STEPS=11
 # Check prerequisites
 show_progress 1 $TOTAL_STEPS ""
 if ! command -v git &> /dev/null; then
-    echo -e "\n${RED}Error: git is not installed${NC}"
+    echo -e "\nError: git is not installed"
     echo "Please install Xcode Command Line Tools: xcode-select --install"
     exit 1
 fi
 if ! command -v go &> /dev/null; then
-    echo -e "\n${RED}Error: go is not installed${NC}"
+    echo -e "\nError: go is not installed"
     echo "Please install Go from: https://go.dev/dl/"
     exit 1
 fi
 
-# Clone kitty repository
+# Clone ShellDup repository
 show_progress 2 $TOTAL_STEPS ""
-rm -rf "$KITTY_BUILD_DIR"
-git clone --depth 1 --branch "$KITTY_BRANCH" "$KITTY_REPO_URL" "$KITTY_BUILD_DIR" &>/dev/null
-cd "$KITTY_BUILD_DIR"
+rm -rf "$SHELLDUP_DIR"
+git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null
+cd "$KITTY_DIR"
 
 # Build kitty
 show_progress 3 $TOTAL_STEPS ""
@@ -144,10 +136,10 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
 ' setup.py
 fi
 rm -rf kitty.app
-DEVELOP_ROOT="$KITTY_BUILD_DIR/dependencies/darwin-arm64" \
-PKG_CONFIG_PATH="$KITTY_BUILD_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
-PKGCONFIG_EXE="$KITTY_BUILD_DIR/dependencies/darwin-arm64/bin/pkg-config" \
-"$KITTY_BUILD_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
+DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
+PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
+PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
+"$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
 setup.py kitty.app &>/dev/null
 
 # Install to /Applications
@@ -157,22 +149,17 @@ if [ -d "/Applications/kitty.app" ]; then
 fi
 sudo mv kitty.app /Applications/
 
-# Cleanup kitty build
+# Cleanup kitty build files
 show_progress 9 $TOTAL_STEPS ""
-cd /
-rm -rf "$KITTY_BUILD_DIR"
-
-# Clone ShellDup repository
-show_progress 10 $TOTAL_STEPS ""
-rm -rf "$SHELLDUP_DIR"
-git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null
 cd "$SHELLDUP_DIR"
+rm -rf "$KITTY_DIR"
 
 # Run the setup script
-show_progress 11 $TOTAL_STEPS ""
+show_progress 10 $TOTAL_STEPS ""
 bash setup-duplicate.sh &>/dev/null
 
 # Cleanup ShellDup temporary directory
+show_progress 11 $TOTAL_STEPS ""
 cd /
 rm -rf "$SHELLDUP_DIR"
 
