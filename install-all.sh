@@ -76,9 +76,9 @@ fi
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
-echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository..."
+echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository (full clone, may take longer)..."
 rm -rf "$SHELLDUP_DIR"
-git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
+git clone --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
 }
