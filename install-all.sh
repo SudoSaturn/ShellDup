@@ -14,16 +14,6 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Error handler
-error_exit() {
-    echo -e "\n${RED}========================================${NC}"
-    echo -e "${RED}ERROR: $1${NC}"
-    echo -e "${RED}========================================${NC}"
-    echo ""
-    echo -e "${YELLOW}Step that failed:${NC} $2"
-    exit 1
-}
-
 clear
 echo ""
 echo "               _          __          "
@@ -62,46 +52,78 @@ fi
 
 echo -e "${CYAN}[1/12]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
-    error_exit "git is not installed. Install with: xcode-select --install" "Prerequisites check"
+    echo -e "${RED}Error: git is not installed${NC}"
+    echo "Install with: xcode-select --install"
+    exit 1
 fi
 if ! command -v go &> /dev/null; then
-    error_exit "go is not installed. Install from: https://go.dev/dl/" "Prerequisites check"
+    echo -e "${RED}Error: go is not installed${NC}"
+    echo "Install from: https://go.dev/dl/"
+    exit 1
 fi
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
 echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
-git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || \
-    error_exit "Failed to clone repository" "Git clone"
+if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" 2>&1; then
+    echo -e "${RED}Error: Failed to clone repository${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} Repository cloned"
 
 # Verify kitty directory exists
 if [ ! -d "$KITTY_DIR" ]; then
-    error_exit "kitty directory not found in ShellDup repository" "Directory verification"
+    echo -e "${RED}Error: kitty directory not found${NC}"
+    exit 1
 fi
 
 cd "$KITTY_DIR"
 
-# Clean any existing builds and dependencies
+# Clean any existing builds
 echo ""
 echo -e "${CYAN}[3/12]${NC} Cleaning previous builds..."
-rm -rf build dependencies kitty.app &>/dev/null || true
+rm -rf build dependencies kitty.app 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Cleaned"
 
 echo ""
-echo -e "${CYAN}[4/12]${NC} Downloading kitty dependencies (this may take several minutes)..."
-./dev.sh deps &>/dev/null || error_exit "Failed to download dependencies" "Dependencies download"
+echo -e "${CYAN}[4/12]${NC} Downloading kitty dependencies..."
+echo -e "${YELLOW}This may take several minutes. Output below:${NC}"
+echo ""
+if ! ./dev.sh deps; then
+    echo ""
+    echo -e "${RED}===========================================${NC}"
+    echo -e "${RED}Failed to download dependencies${NC}"
+    echo -e "${RED}===========================================${NC}"
+    echo ""
+    echo -e "${YELLOW}Common causes:${NC}"
+    echo "1. Network connectivity issues"
+    echo "2. GitHub rate limiting"
+    echo "3. Missing system dependencies"
+    echo ""
+    echo -e "${YELLOW}Troubleshooting:${NC}"
+    echo "1. Check your internet connection"
+    echo "2. Try running manually: cd $KITTY_DIR && ./dev.sh deps"
+    echo "3. Check if you can access: https://github.com"
+    exit 1
+fi
+echo ""
 echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
 echo ""
-echo -e "${CYAN}[5/12]${NC} Building kitty (this may take several minutes)..."
-./dev.sh build &>/dev/null || error_exit "Failed to build kitty" "Kitty build"
+echo -e "${CYAN}[5/12]${NC} Building kitty..."
+if ! ./dev.sh build 2>&1; then
+    echo -e "${RED}Error: Failed to build kitty${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} Kitty built"
 
 echo ""
 echo -e "${CYAN}[6/12]${NC} Installing documentation dependencies..."
-./dev.sh deps --for-docs &>/dev/null || error_exit "Failed to install doc dependencies" "Doc dependencies"
+if ! ./dev.sh deps --for-docs 2>&1; then
+    echo -e "${RED}Error: Failed to install doc dependencies${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} Doc dependencies installed"
 
 echo ""
@@ -113,7 +135,10 @@ echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
 echo ""
 echo -e "${CYAN}[8/12]${NC} Building documentation..."
-./dev.sh docs &>/dev/null || error_exit "Failed to build documentation" "Documentation build"
+if ! ./dev.sh docs 2>&1; then
+    echo -e "${RED}Error: Failed to build documentation${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} Documentation built"
 
 echo ""
@@ -131,11 +156,14 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
 ' setup.py
 fi
 rm -rf kitty.app
-DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
+if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app &>/dev/null || error_exit "Failed to build kitty.app" "App bundle creation"
+setup.py kitty.app 2>&1; then
+    echo -e "${RED}Error: Failed to build kitty.app${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
@@ -143,7 +171,7 @@ echo -e "${CYAN}[10/12]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
-sudo mv kitty.app /Applications/ || error_exit "Failed to install to /Applications" "App installation"
+sudo mv kitty.app /Applications/
 echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
@@ -155,9 +183,13 @@ echo -e "${GREEN}✓${NC} Build files cleaned"
 echo ""
 echo -e "${CYAN}[12/12]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
-    error_exit "setup-duplicate.sh not found in repository" "Setup script verification"
+    echo -e "${RED}Error: setup-duplicate.sh not found${NC}"
+    exit 1
 fi
-bash setup-duplicate.sh &>/dev/null || error_exit "Failed to run setup-duplicate.sh" "Setup script execution"
+if ! bash setup-duplicate.sh 2>&1; then
+    echo -e "${RED}Error: Failed to run setup-duplicate.sh${NC}"
+    exit 1
+fi
 echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
