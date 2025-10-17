@@ -1,0 +1,234 @@
+.. highlight:: conf
+
+.. default-domain:: conf
+
+
+.. _conf-kitten-ssh-bootstrap:
+
+Host bootstrap configuration
+------------------------------------------------
+
+.. opt:: kitten-ssh.hostname
+.. code-block:: conf
+
+    hostname *
+
+The hostname that the following options apply to. A glob pattern to match
+multiple hosts can be used. Multiple hostnames can also be specified, separated
+by spaces. The hostname can include an optional username in the form
+:code:`user@host`. When not specified options apply to all hosts, until the
+first hostname specification is found. Note that matching of hostname is done
+against the name you specify on the command line to connect to the remote host.
+If you wish to include the same basic configuration for many different hosts,
+you can do so with the :ref:`include <include>` directive. In version 0.28.0
+the behavior of this option was changed slightly, now, when a hostname is encountered
+all its config values are set to defaults instead of being inherited from a previous
+matching hostname block. In particular it means hostnames dont inherit configurations,
+thereby avoiding hard to understand action-at-a-distance.
+
+.. opt:: kitten-ssh.interpreter
+.. code-block:: conf
+
+    interpreter sh
+
+The interpreter to use on the remote host. Must be either a POSIX complaint
+shell or a :program:`python` executable. If the default :program:`sh` is not
+available or broken, using an alternate interpreter can be useful.
+
+.. opt:: kitten-ssh.remote_dir
+.. code-block:: conf
+
+    remote_dir .local/share/kitty-ssh-kitten
+
+The location on the remote host where the files needed for this kitten are
+installed. Relative paths are resolved with respect to :code:`$HOME`. Absolute
+paths have their leading / removed and so are also resolved with respect to $HOME.
+
+.. opt:: kitten-ssh.copy
+
+Copy files and directories from local to remote hosts. The specified files are
+assumed to be relative to the HOME directory and copied to the HOME on the
+remote. Directories are copied recursively. If absolute paths are used, they are
+copied as is. For example::
+
+    copy .vimrc .zshrc .config/some-dir
+
+Use :code:`--dest` to copy a file to some other destination on the remote host::
+
+    copy --dest some-other-name some-file
+
+Glob patterns can be specified to copy multiple files, with :code:`--glob`::
+
+    copy --glob images/*.png
+
+Files can be excluded when copying with :code:`--exclude`::
+
+    copy --glob --exclude *.jpg --exclude *.bmp images/*
+
+Files whose remote name matches the exclude pattern will not be copied.
+For more details, see :ref:`ssh_copy_command`.
+
+
+.. _conf-kitten-ssh-shell:
+
+Login shell environment
+-------------------------------------------
+
+.. opt:: kitten-ssh.shell_integration
+.. code-block:: conf
+
+    shell_integration inherited
+
+Control the shell integration on the remote host. See :ref:`shell_integration`
+for details on how this setting works. The special value :code:`inherited` means
+use the setting from :file:`kitty.conf`. This setting is useful for overriding
+integration on a per-host basis.
+
+.. opt:: kitten-ssh.login_shell
+
+The login shell to execute on the remote host. By default, the remote user
+account's login shell is used.
+
+.. opt:: kitten-ssh.env
+
+Specify the environment variables to be set on the remote host. Using the
+name with an equal sign (e.g. :code:`env VAR=`) will set it to the empty string.
+Specifying only the name (e.g. :code:`env VAR`) will remove the variable from
+the remote shell environment. The special value :code:`_kitty_copy_env_var_`
+will cause the value of the variable to be copied from the local environment.
+The definitions are processed alphabetically. Note that environment variables
+are expanded recursively, for example::
+
+    env VAR1=a
+    env VAR2=${HOME}/${VAR1}/b
+
+The value of :code:`VAR2` will be :code:`<path to home directory>/a/b`.
+
+.. opt:: kitten-ssh.cwd
+
+The working directory on the remote host to change to. Environment variables in
+this value are expanded. The default is empty so no changing is done, which
+usually means the HOME directory is used.
+
+.. opt:: kitten-ssh.color_scheme
+
+Specify a color scheme to use when connecting to the remote host. If this option
+ends with :code:`.conf`, it is assumed to be the name of a config file to load
+from the kitty config directory, otherwise it is assumed to be the name of a
+color theme to load via the :doc:`themes kitten </kittens/themes>`. Note that
+only colors applying to the text/background are changed, other config settings
+in the .conf files/themes are ignored.
+
+.. opt:: kitten-ssh.remote_kitty
+.. code-block:: conf
+
+    remote_kitty if-needed
+
+Make :program:`kitten` available on the remote host. Useful to run kittens such
+as the :doc:`icat kitten </kittens/icat>` to display images or the
+:doc:`transfer file kitten </kittens/transfer>` to transfer files. Only works if
+the remote host has an architecture for which :link:`pre-compiled kitten binaries
+<https://github.com/kovidgoyal/kitty/releases>` are available. Note that kitten
+is not actually copied to the remote host, instead a small bootstrap script is
+copied which will download and run kitten when kitten is first executed on the
+remote host. A value of :code:`if-needed` means kitten is installed only if not
+already present in the system-wide PATH. A value of :code:`yes` means that kitten
+is installed even if already present, and the installed kitten takes precedence.
+Finally, :code:`no` means no kitten is installed on the remote host. The
+installed kitten can be updated by running: :code:`kitten update-self` on the
+remote host.
+
+
+.. _conf-kitten-ssh-ssh:
+
+SSH configuration
+-------------------------------------
+
+.. opt:: kitten-ssh.share_connections
+.. code-block:: conf
+
+    share_connections yes
+
+Within a single kitty instance, all connections to a particular server can be
+shared. This reduces startup latency for subsequent connections and means that
+you have to enter the password only once. Under the hood, it uses SSH
+ControlMasters and these are automatically cleaned up by kitty when it quits.
+You can map a shortcut to :ac:`close_shared_ssh_connections` to disconnect all
+active shared connections.
+
+.. opt:: kitten-ssh.askpass
+.. code-block:: conf
+
+    askpass unless-set
+
+Control the program SSH uses to ask for passwords or confirmation of host keys
+etc. The default is to use kitty's native :program:`askpass`, unless the
+:envvar:`SSH_ASKPASS` environment variable is set. Set this option to
+:code:`ssh` to not interfere with the normal ssh askpass mechanism at all, which
+typically means that ssh will prompt at the terminal. Set it to :code:`native`
+to always use kitty's native, built-in askpass implementation. Note that not
+using the kitty askpass implementation means that SSH might need to use the
+terminal before the connection is established, so the kitten cannot use the
+terminal to send data without an extra roundtrip, adding to initial connection
+latency.
+
+.. opt:: kitten-ssh.delegate
+
+Do not use the SSH kitten for this host. Instead run the command specified as the delegate.
+For example using :code:`delegate ssh` will run the ssh command with all arguments passed
+to the kitten, except kitten specific ones. This is useful if some hosts are not capable
+of supporting the ssh kitten.
+
+.. opt:: kitten-ssh.forward_remote_control
+.. code-block:: conf
+
+    forward_remote_control no
+
+Forward the kitty remote control socket to the remote host. This allows using the kitty
+remote control facilities from the remote host. WARNING: This allows any software
+on the remote host full access to the local computer, so only do it for trusted remote hosts.
+Note that this does not work with abstract UNIX sockets such as :file:`@mykitty` because of SSH limitations.
+This option uses SSH socket forwarding to forward the socket pointed to by the :envvar:`KITTY_LISTEN_ON`
+environment variable.
+
+
+.. _conf-kitten-ssh-askpass:
+
+Askpass automation
+--------------------------------------
+
+.. opt:: kitten-ssh.password
+
+Specify a password to use when SSH prompts for a password. The value format is
+"backend:secret". Currently, only the "text" backend is supported, which stores
+the secret in plain text in the config file. For example:
+
+    password text:my_password
+
+If the backend prefix is omitted, it is treated as "text:" for backward
+compatibility. Beware that storing passwords in plain text is insecure.
+
+.. opt:: kitten-ssh.totp_secret
+
+Specify a TOTP shared secret to auto-fill one-time codes when SSH asks for them.
+The value format is "backend:secret". Currently, only the "text" backend is
+supported. For example:
+
+    totp_secret text:JBSWY3DPEHPK3PXP
+
+If the backend prefix is omitted, it is treated as "text:" for backward
+compatibility.
+
+.. opt:: kitten-ssh.totp_digits
+.. code-block:: conf
+
+    totp_digits 6
+
+Number of digits for the generated TOTP codes. Default is 6.
+
+.. opt:: kitten-ssh.totp_period
+.. code-block:: conf
+
+    totp_period 30
+
+Time period in seconds for the TOTP code validity. Default is 30.

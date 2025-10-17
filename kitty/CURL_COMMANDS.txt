@@ -1,0 +1,95 @@
+================================================================================
+CURL COMMANDS FOR INSTALLING KITTY
+================================================================================
+
+TWO METHODS AVAILABLE:
+
+METHOD 1: ONE-COMMAND INSTALL (RECOMMENDED - NO CLONING NEEDED)
+================================================================
+
+Run from ANYWHERE - no need to clone or cd:
+-------------------------------------------
+
+curl -fsSL https://raw.githubusercontent.com/USERNAME/REPO/BRANCH/install-kitty.sh | bash
+
+This will:
+  • Clone the repository automatically to /tmp
+  • Build everything
+  • Install to /Applications
+  • Clean up temporary files
+
+For the official kitty repository:
+----------------------------------
+
+curl -fsSL https://raw.githubusercontent.com/kovidgoyal/kitty/master/install-kitty.sh | bash
+
+
+For your own fork:
+------------------
+
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/kitty/YOUR_BRANCH/install-kitty.sh | bash
+
+Example:
+--------
+
+curl -fsSL https://raw.githubusercontent.com/sudosaturn/kitty/main/install-kitty.sh | bash
+
+
+METHOD 2: BUILD FROM EXISTING CLONE (FOR DEVELOPERS)
+=====================================================
+
+If you already have the source code:
+------------------------------------
+
+cd /path/to/kitty
+curl -fsSL https://raw.githubusercontent.com/USERNAME/REPO/BRANCH/build-app.sh | bash
+
+Or if you have the script locally:
+----------------------------------
+
+cd /path/to/kitty
+./build-app.sh
+
+
+WHAT HAPPENS:
+-------------
+1. The script downloads and executes in your current directory
+2. It verifies you're in a kitty source directory
+3. It builds everything automatically
+4. It automatically installs kitty.app to /Applications
+5. You may be prompted for your password (sudo) to install to /Applications
+
+
+AFTER INSTALLATION:
+-------------------
+
+Open the app:
+  open -a kitty
+
+Launch from Spotlight:
+  Press ⌘+Space, type "kitty", press Enter
+
+Run from terminal:
+  /Applications/kitty.app/Contents/MacOS/kitty
+
+
+SECURITY NOTE:
+--------------
+Always review scripts before piping to bash. You can inspect the script at:
+https://raw.githubusercontent.com/USERNAME/REPO/BRANCH/build-app.sh
+
+Or download and review first:
+  curl -fsSL https://raw.githubusercontent.com/USERNAME/REPO/BRANCH/build-app.sh -o build-app.sh
+  cat build-app.sh  # Review the script
+  chmod +x build-app.sh
+  ./build-app.sh
+
+
+FLAGS EXPLAINED:
+----------------
+-f, --fail       = Fail silently on server errors
+-s, --silent     = Silent mode, don't show progress
+-S, --show-error = Show errors even in silent mode
+-L, --location   = Follow redirects
+
+================================================================================

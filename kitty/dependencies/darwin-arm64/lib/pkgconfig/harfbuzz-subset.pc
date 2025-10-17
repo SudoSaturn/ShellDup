@@ -1,0 +1,12 @@
+prefix=/Users/sudosaturn/kitty/dependencies/darwin-arm64
+exec_prefix=/Users/sudosaturn/kitty/dependencies/darwin-arm64
+libdir=/Users/sudosaturn/kitty/dependencies/darwin-arm64/lib
+includedir=/Users/sudosaturn/kitty/dependencies/darwin-arm64/include
+
+Name: harfbuzz subsetter
+Description: HarfBuzz font subsetter
+Version: 8.5.0
+
+Requires: harfbuzz = 8.5.0
+Libs: -L${libdir} -lharfbuzz-subset
+Cflags: -I${includedir}/harfbuzz

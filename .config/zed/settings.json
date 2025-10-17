@@ -1,0 +1,86 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "language_models": {
+    "ollama": {
+      "api_url": "http://127.0.0.1:11434",
+      "available_models": [
+        {
+          "name": "gudguy:latest",
+          "display_name": "gudguy:latest",
+          "max_tokens": 262144,
+          "supports_tools": true
+          // "supports_images": true
+        }
+      ]
+    }
+  },
+  "agent": {
+    "default_model": {
+      "provider": "ollama",
+      "model": "gudguy:latest"
+    },
+    "model_parameters": [
+      // To set parameters for all requests to OpenAI models:
+      // {
+      //   "provider": "openai",
+      //   "temperature": 0.5
+      // }
+      //
+      // To set parameters for all requests in general:
+      //
+      // To set parameters for a specific provider and model:
+      // {
+      //   "provider": "zed.dev",
+      //   "model": "claude-sonnet-4",
+      //   "temperature": 1.0
+      // }
+    ],
+    "profiles": {
+      "write": {
+        "name": "Write",
+        "enable_all_context_servers": true,
+        "tools": {
+          "open": true,
+          "copy_path": true,
+          "create_directory": true,
+          "delete_path": true,
+          "diagnostics": true,
+          "edit_file": true,
+          "fetch": true,
+          "list_directory": true,
+          "project_notifications": true,
+          "move_path": true,
+          "now": true,
+          "find_path": true,
+          "read_file": true,
+          "grep": true,
+          "terminal": true,
+          "thinking": true,
+          "web_search": true
+        }
+      }
+    },
+    "use_modifier_to_send": true,
+    "play_sound_when_agent_done": false,
+    "always_allow_tool_actions": true
+  },
+  "icon_theme": "Material Icon Theme",
+  "telemetry": {
+    "metrics": false,
+    "diagnostics": false
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "system",
+    "light": "Catppuccin Iced Latte (Blur)",
+    "dark": "Tailwind Syntax"
+  }
+}

@@ -1,0 +1,5 @@
+flavors/*
+plugins/*
+
+!plugins/folder-rules.yazi
+!flavors/catppuccin-macchiato.yazi

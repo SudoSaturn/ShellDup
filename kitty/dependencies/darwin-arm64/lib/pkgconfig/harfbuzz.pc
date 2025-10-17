@@ -1,0 +1,13 @@
+prefix=/Users/sudosaturn/kitty/dependencies/darwin-arm64
+exec_prefix=/Users/sudosaturn/kitty/dependencies/darwin-arm64
+libdir=/Users/sudosaturn/kitty/dependencies/darwin-arm64/lib
+includedir=/Users/sudosaturn/kitty/dependencies/darwin-arm64/include
+
+Name: harfbuzz
+Description: HarfBuzz text shaping library
+Version: 8.5.0
+
+Libs: -L${libdir} -lharfbuzz
+Libs.private: -lm     -framework ApplicationServices 
+Requires.private:   
+Cflags: -I${includedir}/harfbuzz

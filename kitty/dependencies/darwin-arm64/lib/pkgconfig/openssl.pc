@@ -1,0 +1,9 @@
+prefix=/var/folders/14/n1__ylv96zx9__qy28l8dmyw0000gn/C/t/openssl.x86_64.-tvrigqj9
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include 
+
+Name: OpenSSL
+Description: Secure Sockets Layer and cryptography libraries and tools
+Version: 3.5.4
+Requires: libssl libcrypto
