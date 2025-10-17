@@ -86,12 +86,12 @@ TOTAL_STEPS=11
 # Check prerequisites
 show_progress 1 $TOTAL_STEPS ""
 if ! command -v git &> /dev/null; then
-    echo -e "\nError: git is not installed"
+    echo -e "\n${RED}Error: git is not installed${NC}"
     echo "Please install Xcode Command Line Tools: xcode-select --install"
     exit 1
 fi
 if ! command -v go &> /dev/null; then
-    echo -e "\nError: go is not installed"
+    echo -e "\n${RED}Error: go is not installed${NC}"
     echo "Please install Go from: https://go.dev/dl/"
     exit 1
 fi
@@ -99,14 +99,24 @@ fi
 # Clone ShellDup repository
 show_progress 2 $TOTAL_STEPS ""
 rm -rf "$SHELLDUP_DIR"
-if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null; then
+echo -e "\n${CYAN}Cloning repository from: $SHELLDUP_REPO_URL${NC}"
+echo -e "${CYAN}Branch: $SHELLDUP_BRANCH${NC}"
+echo -e "${CYAN}Destination: $SHELLDUP_DIR${NC}"
+if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR"; then
     echo -e "\n${RED}Error: Failed to clone ShellDup repository${NC}"
+    echo -e "${YELLOW}Troubleshooting steps:${NC}"
+    echo "1. Check if the repository exists: https://github.com/sudosaturn/ShellDup"
+    echo "2. Check if the branch '$SHELLDUP_BRANCH' exists"
+    echo "3. Check your internet connection"
+    echo "4. Try cloning manually: git clone $SHELLDUP_REPO_URL"
     exit 1
 fi
 
 # Verify kitty directory exists
 if [ ! -d "$KITTY_DIR" ]; then
     echo -e "\n${RED}Error: kitty directory not found in ShellDup repository${NC}"
+    echo -e "${YELLOW}Repository contents:${NC}"
+    ls -la "$SHELLDUP_DIR"
     exit 1
 fi
 
@@ -114,14 +124,14 @@ cd "$KITTY_DIR"
 
 # Build kitty
 show_progress 3 $TOTAL_STEPS ""
-if ! ./dev.sh build &>/dev/null; then
+if ! ./dev.sh build; then
     echo -e "\n${RED}Error: Failed to build kitty${NC}"
     exit 1
 fi
 
 # Install documentation dependencies
 show_progress 4 $TOTAL_STEPS ""
-if ! ./dev.sh deps --for-docs &>/dev/null; then
+if ! ./dev.sh deps --for-docs; then
     echo -e "\n${RED}Error: Failed to install documentation dependencies${NC}"
     exit 1
 fi
@@ -134,7 +144,7 @@ ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencie
 
 # Build documentation
 show_progress 6 $TOTAL_STEPS ""
-if ! ./dev.sh docs &>/dev/null; then
+if ! ./dev.sh docs; then
     echo -e "\n${RED}Error: Failed to build documentation${NC}"
     exit 1
 fi
@@ -158,7 +168,7 @@ if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app &>/dev/null; then
+setup.py kitty.app; then
     echo -e "\n${RED}Error: Failed to build kitty.app${NC}"
     exit 1
 fi
@@ -179,10 +189,12 @@ rm -rf "$KITTY_DIR"
 show_progress 10 $TOTAL_STEPS ""
 if [ ! -f "setup-duplicate.sh" ]; then
     echo -e "\n${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
+    echo -e "${YELLOW}Repository contents:${NC}"
+    ls -la "$SHELLDUP_DIR"
     exit 1
 fi
 
-if ! bash setup-duplicate.sh &>/dev/null; then
+if ! bash setup-duplicate.sh; then
     echo -e "\n${RED}Error: Failed to run setup-duplicate.sh${NC}"
     exit 1
 fi
