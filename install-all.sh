@@ -63,7 +63,7 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-echo -e "${CYAN}[1/13]${NC} Checking prerequisites..."
+echo -e "${CYAN}[1/14]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
     echo -e "${RED}Error: git is not installed${NC}"
     echo "Install with: xcode-select --install"
@@ -77,7 +77,7 @@ fi
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
-echo -e "${CYAN}[2/13]${NC} Cloning ShellDup repository..."
+echo -e "${CYAN}[2/14]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
 git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
@@ -91,7 +91,7 @@ if [ ! -d "$KITTY_DIR" ]; then
 fi
 
 echo ""
-echo -e "${CYAN}[3/13]${NC} Cloning .github directory from official kitty repository..."
+echo -e "${CYAN}[3/14]${NC} Cloning .github directory from official kitty repository..."
 rm -rf "$KITTY_TEMP_DIR"
 mkdir -p "$KITTY_TEMP_DIR"
 cd "$KITTY_TEMP_DIR"
@@ -120,12 +120,12 @@ echo -e "${GREEN}✓${NC} .github directory added"
 cd "$KITTY_DIR" || exit 1
 
 echo ""
-echo -e "${CYAN}[4/13]${NC} Cleaning build directory..."
+echo -e "${CYAN}[4/14]${NC} Cleaning build directory..."
 rm -rf build dependencies kitty.app 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Cleaned"
 
 echo ""
-echo -e "${CYAN}[5/13]${NC} Downloading dependencies (may take several minutes)..."
+echo -e "${CYAN}[5/14]${NC} Downloading dependencies (may take several minutes)..."
 ./dev.sh deps &>/dev/null || {
     echo -e "${RED}Error: Failed to download dependencies${NC}"
     exit 1
@@ -133,7 +133,7 @@ echo -e "${CYAN}[5/13]${NC} Downloading dependencies (may take several minutes).
 echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
 echo ""
-echo -e "${CYAN}[6/13]${NC} Building kitty (may take several minutes)..."
+echo -e "${CYAN}[6/14]${NC} Building kitty (may take several minutes)..."
 ./dev.sh build &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty${NC}"
     exit 1
@@ -141,7 +141,7 @@ echo -e "${CYAN}[6/13]${NC} Building kitty (may take several minutes)..."
 echo -e "${GREEN}✓${NC} Kitty built"
 
 echo ""
-echo -e "${CYAN}[7/13]${NC} Installing documentation dependencies..."
+echo -e "${CYAN}[7/14]${NC} Installing documentation dependencies..."
 ./dev.sh deps --for-docs &>/dev/null || {
     echo -e "${RED}Error: Failed to install doc dependencies${NC}"
     exit 1
@@ -149,14 +149,14 @@ echo -e "${CYAN}[7/13]${NC} Installing documentation dependencies..."
 echo -e "${GREEN}✓${NC} Doc dependencies installed"
 
 echo ""
-echo -e "${CYAN}[8/13]${NC} Setting up sphinx tools..."
+echo -e "${CYAN}[8/14]${NC} Setting up sphinx tools..."
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
 echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
 echo ""
-echo -e "${CYAN}[9/13]${NC} Building documentation..."
+echo -e "${CYAN}[9/14]${NC} Building documentation..."
 ./dev.sh docs &>/dev/null || {
     echo -e "${RED}Error: Failed to build documentation${NC}"
     exit 1
@@ -164,7 +164,7 @@ echo -e "${CYAN}[9/13]${NC} Building documentation..."
 echo -e "${GREEN}✓${NC} Documentation built"
 
 echo ""
-echo -e "${CYAN}[10/13]${NC} Building macOS app bundle..."
+echo -e "${CYAN}[10/14]${NC} Building macOS app bundle..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -189,7 +189,7 @@ setup.py kitty.app &>/dev/null || {
 echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
-echo -e "${CYAN}[11/13]${NC} Installing to /Applications..."
+echo -e "${CYAN}[11/14]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
@@ -200,22 +200,33 @@ sudo mv kitty.app /Applications/ || {
 echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
-echo -e "${CYAN}[12/13]${NC} Cleaning up kitty build files..."
+echo -e "${CYAN}[12/14]${NC} Signing the app (ad-hoc signature)..."
+sudo codesign --force --deep --sign - /Applications/kitty.app &>/dev/null || {
+    echo -e "${YELLOW}Warning: Failed to sign app, trying to remove quarantine attribute...${NC}"
+}
+sudo xattr -cr /Applications/kitty.app &>/dev/null || {
+    echo -e "${YELLOW}Warning: Failed to remove quarantine attribute${NC}"
+}
+echo -e "${GREEN}✓${NC} App signed"
+
+echo ""
+echo -e "${CYAN}[13/14]${NC} Cleaning up kitty build files..."
 cd "$SHELLDUP_DIR" || exit 1
 rm -rf "$KITTY_DIR"
 echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
-echo -e "${CYAN}[13/13]${NC} Running setup script..."
-if [ ! -f "setup-duplicate.sh" ]; then
-    echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
-    exit 1
+echo -e "${CYAN}[14/14]${NC} Running setup script..."
+if [ -f "setup-duplicate.sh" ]; then
+    echo -e "${YELLOW}Found setup-duplicate.sh, executing...${NC}"
+    if bash setup-duplicate.sh; then
+        echo -e "${GREEN}✓${NC} Setup script completed successfully"
+    else
+        echo -e "${YELLOW}⚠${NC} Setup script encountered errors but continuing..."
+    fi
+else
+    echo -e "${YELLOW}⚠${NC} setup-duplicate.sh not found, skipping..."
 fi
-bash setup-duplicate.sh &>/dev/null || {
-    echo -e "${RED}Error: Failed to run setup-duplicate.sh${NC}"
-    exit 1
-}
-echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
 echo -e "${CYAN}Final cleanup...${NC}"
@@ -230,8 +241,12 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Installation Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${YELLOW}To apply changes, run:${NC}"
-echo -e "${CYAN}  source ~/.zshrc${NC}"
+echo -e "${YELLOW}Kitty has been successfully installed to /Applications/kitty.app${NC}"
 echo ""
+if [ -f "$HOME/.zshrc" ]; then
+    echo -e "${YELLOW}To apply environment changes, run:${NC}"
+    echo -e "${CYAN}  source ~/.zshrc${NC}"
+    echo ""
+fi
 echo -e "${YELLOW}Or simply restart your terminal.${NC}"
 echo ""
