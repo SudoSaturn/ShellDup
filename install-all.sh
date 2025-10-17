@@ -3,16 +3,6 @@
 # install-all.sh
 # Complete setup installer: kitty terminal + full environment configuration
 #
-# Usage:
-#   curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-all.sh | bash
-#
-# This script will:
-#   1. Clone and build kitty terminal from source
-#   2. Install kitty to /Applications/kitty.app
-#   3. Clone ShellDup repository
-#   4. Run complete environment setup
-#   5. Clean up temporary files
-#
 
 set -e  # Exit on error
 
@@ -24,25 +14,14 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Progress bar function
-show_progress() {
-    local current=$1
-    local total=$2
-    local message=$3
-    local percent=$((current * 100 / total))
-    local filled=$((percent * 30 / 100))
-    local empty=$((30 - filled))
-    
-    # Clear the line first
-    printf "\r\033[K"
-    printf "[%3d%%] " "$percent"
-    printf "%${filled}s" | tr ' ' '█'
-    printf "%${empty}s" | tr ' ' ' '
-}
-
-complete_step() {
-    # Do nothing - just let the progress bar continue on the same line
-    :
+# Error handler
+error_exit() {
+    echo -e "\n${RED}========================================${NC}"
+    echo -e "${RED}ERROR: $1${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo ""
+    echo -e "${YELLOW}Step that failed:${NC} $2"
+    exit 1
 }
 
 clear
@@ -81,77 +60,64 @@ if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
     SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
 fi
 
-TOTAL_STEPS=12
-
-# Check prerequisites
-show_progress 1 $TOTAL_STEPS ""
+echo -e "${CYAN}[1/12]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
-    echo -e "\n${RED}Error: git is not installed${NC}"
-    echo "Please install Xcode Command Line Tools: xcode-select --install"
-    exit 1
+    error_exit "git is not installed. Install with: xcode-select --install" "Prerequisites check"
 fi
 if ! command -v go &> /dev/null; then
-    echo -e "\n${RED}Error: go is not installed${NC}"
-    echo "Please install Go from: https://go.dev/dl/"
-    exit 1
+    error_exit "go is not installed. Install from: https://go.dev/dl/" "Prerequisites check"
 fi
+echo -e "${GREEN}✓${NC} Prerequisites OK"
 
-# Clone ShellDup repository
-show_progress 2 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[2/12]${NC} Cloning ShellDup repository..."
 rm -rf "$SHELLDUP_DIR"
-if ! git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to clone ShellDup repository${NC}"
-    echo -e "${YELLOW}Troubleshooting:${NC}"
-    echo "1. Check repository exists: https://github.com/sudosaturn/ShellDup"
-    echo "2. Check branch '$SHELLDUP_BRANCH' exists"
-    echo "3. Check internet connection"
-    exit 1
-fi
+git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || \
+    error_exit "Failed to clone repository" "Git clone"
+echo -e "${GREEN}✓${NC} Repository cloned"
 
 # Verify kitty directory exists
 if [ ! -d "$KITTY_DIR" ]; then
-    echo -e "\n${RED}Error: kitty directory not found in ShellDup repository${NC}"
-    exit 1
+    error_exit "kitty directory not found in ShellDup repository" "Directory verification"
 fi
 
 cd "$KITTY_DIR"
 
-# Download all dependencies first (CRITICAL STEP)
-show_progress 3 $TOTAL_STEPS ""
-if ! ./dev.sh deps &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to download kitty dependencies${NC}"
-    exit 1
-fi
+# Clean any existing builds and dependencies
+echo ""
+echo -e "${CYAN}[3/12]${NC} Cleaning previous builds..."
+rm -rf build dependencies kitty.app &>/dev/null || true
+echo -e "${GREEN}✓${NC} Cleaned"
 
-# Build kitty
-show_progress 4 $TOTAL_STEPS ""
-if ! ./dev.sh build &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to build kitty${NC}"
-    exit 1
-fi
+echo ""
+echo -e "${CYAN}[4/12]${NC} Downloading kitty dependencies (this may take several minutes)..."
+./dev.sh deps &>/dev/null || error_exit "Failed to download dependencies" "Dependencies download"
+echo -e "${GREEN}✓${NC} Dependencies downloaded"
 
-# Install documentation dependencies
-show_progress 5 $TOTAL_STEPS ""
-if ! ./dev.sh deps --for-docs &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to install documentation dependencies${NC}"
-    exit 1
-fi
+echo ""
+echo -e "${CYAN}[5/12]${NC} Building kitty (this may take several minutes)..."
+./dev.sh build &>/dev/null || error_exit "Failed to build kitty" "Kitty build"
+echo -e "${GREEN}✓${NC} Kitty built"
 
-# Setup sphinx tools
-show_progress 6 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[6/12]${NC} Installing documentation dependencies..."
+./dev.sh deps --for-docs &>/dev/null || error_exit "Failed to install doc dependencies" "Doc dependencies"
+echo -e "${GREEN}✓${NC} Doc dependencies installed"
+
+echo ""
+echo -e "${CYAN}[7/12]${NC} Setting up sphinx tools..."
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
+echo -e "${GREEN}✓${NC} Sphinx tools setup"
 
-# Build documentation
-show_progress 7 $TOTAL_STEPS ""
-if ! ./dev.sh docs &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to build documentation${NC}"
-    exit 1
-fi
+echo ""
+echo -e "${CYAN}[8/12]${NC} Building documentation..."
+./dev.sh docs &>/dev/null || error_exit "Failed to build documentation" "Documentation build"
+echo -e "${GREEN}✓${NC} Documentation built"
 
-# Apply setup.py fix and build app
-show_progress 8 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[9/12]${NC} Building macOS app bundle..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -165,51 +131,50 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
 ' setup.py
 fi
 rm -rf kitty.app
-if ! DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
+DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
 PKGCONFIG_EXE="$KITTY_DIR/dependencies/darwin-arm64/bin/pkg-config" \
 "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/Current/bin/python3" \
-setup.py kitty.app &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to build kitty.app${NC}"
-    exit 1
-fi
+setup.py kitty.app &>/dev/null || error_exit "Failed to build kitty.app" "App bundle creation"
+echo -e "${GREEN}✓${NC} App bundle created"
 
-# Install to /Applications
-show_progress 9 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[10/12]${NC} Installing to /Applications..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
-sudo mv kitty.app /Applications/
+sudo mv kitty.app /Applications/ || error_exit "Failed to install to /Applications" "App installation"
+echo -e "${GREEN}✓${NC} Installed to /Applications"
 
-# Cleanup kitty build files
-show_progress 10 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[11/12]${NC} Cleaning up kitty build files..."
 cd "$SHELLDUP_DIR"
 rm -rf "$KITTY_DIR"
+echo -e "${GREEN}✓${NC} Build files cleaned"
 
-# Run the setup script
-show_progress 11 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[12/12]${NC} Running setup script..."
 if [ ! -f "setup-duplicate.sh" ]; then
-    echo -e "\n${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
-    exit 1
+    error_exit "setup-duplicate.sh not found in repository" "Setup script verification"
 fi
+bash setup-duplicate.sh &>/dev/null || error_exit "Failed to run setup-duplicate.sh" "Setup script execution"
+echo -e "${GREEN}✓${NC} Setup complete"
 
-if ! bash setup-duplicate.sh &>/dev/null; then
-    echo -e "\n${RED}Error: Failed to run setup-duplicate.sh${NC}"
-    exit 1
-fi
-
-# Cleanup ShellDup temporary directory before changing directory
-show_progress 12 $TOTAL_STEPS ""
+echo ""
+echo -e "${CYAN}[13/13]${NC} Final cleanup..."
 cd "$HOME"
 rm -rf "$SHELLDUP_DIR"
+echo -e "${GREEN}✓${NC} Cleanup complete"
 
 clear
 echo ""
 echo ""
-echo -e "${GREEN}Installation complete!${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}Installation Complete!${NC}"
+echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${YELLOW}Important: Run the following command to apply changes:${NC}"
-echo -e "${CYAN}source ~/.zshrc${NC}"
+echo -e "${YELLOW}To apply changes, run:${NC}"
+echo -e "${CYAN}  source ~/.zshrc${NC}"
 echo ""
-echo "Or simply restart your terminal."
+echo -e "${YELLOW}Or simply restart your terminal.${NC}"
 echo ""
