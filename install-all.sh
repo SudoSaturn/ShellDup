@@ -217,7 +217,7 @@ echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
 echo -e "${CYAN}[14/14]${NC} Running setup script..."
-if [ -f "setup-duplicate.sh" ]; then
+if [ -f "cd .. && setup-duplicate.sh" ]; then
     echo -e "${YELLOW}Found setup-duplicate.sh, executing...${NC}"
     if bash setup-duplicate.sh; then
         echo -e "${GREEN}✓${NC} Setup script completed successfully"
