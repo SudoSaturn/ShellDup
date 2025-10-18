@@ -422,13 +422,11 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${YELLOW}Applying changes...${NC}"
 sleep 2
-source ~/.zshrc 2>/dev/null || true
 
 if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/local/bin/zsh" ] && [ "$SHELL" != "/opt/homebrew/bin/zsh" ]; then
     echo -e "${YELLOW}Setting zsh as default shell...${NC}"
     chsh -s $(which zsh)
 fi
-
 echo ""
 echo -e "${CYAN}Launching kitty with btop panel...${NC}"
 sleep 1
@@ -437,3 +435,4 @@ open -a kitty
 sleep 2
 # Run btop.sh via kitty remote control
 /Applications/kitty.app/Contents/MacOS/kitty @ launch --type=background ~/.config/kitty/btop.sh 2>/dev/null || true
+source ~/.zshrc 2>/dev/null || true

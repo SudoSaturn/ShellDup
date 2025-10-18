@@ -1,8 +1,6 @@
-# Complete Development Environment Setup
+# This Is My Humble Terminal Setup
 
-## 🚀 One-Command Installation
-
-Install everything (kitty terminal + full environment) with a single command:
+## Install everything with a single command
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-all.sh | bash
@@ -11,11 +9,13 @@ curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-al
 ## What Gets Installed
 
 ### Part 1: kitty Terminal
+
 - Custom-built kitty terminal from source
 - Installed to `/Applications/kitty.app`
 - Includes all themes and configurations
 
 ### Part 2: Development Environment
+
 - **Shell**: zsh with Oh My Zsh
 - **Prompt**: Starship (with custom theme)
 - **Terminal Tools**:
@@ -70,46 +70,6 @@ curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-al
 11. ✅ Sets up shell environment
 12. ✅ Cleans up temporary files
 
-## Customization
-
-You can customize the installation by setting environment variables:
-
-```bash
-# Use a different kitty repository
-export CUSTOM_KITTY_REPO="https://github.com/YOUR_USERNAME/kitty.git"
-export CUSTOM_KITTY_BRANCH="your-branch"
-
-# Use a different ShellDup repository
-export CUSTOM_SHELLDUP_REPO="https://github.com/YOUR_USERNAME/ShellDup.git"
-export CUSTOM_SHELLDUP_BRANCH="your-branch"
-
-# Then run the installer
-curl -fsSL https://raw.githubusercontent.com/sudosaturn/ShellDup/main/install-all.sh | bash
-```
-
-## After Installation
-
-1. **Launch kitty**:
-   - Open from Applications folder
-   - Or run: `open -a kitty`
-   - Or use Spotlight: `⌘+Space` → type "kitty"
-
-2. **Restart your terminal** or run:
-   ```bash
-   source ~/.zshrc
-   ```
-
-3. **Verify installation**:
-   ```bash
-   # Check kitty version
-   /Applications/kitty.app/Contents/MacOS/kitty --version
-   
-   # Check installed tools
-   starship --version
-   eza --version
-   bat --version
-   ```
-
 ## Configuration Files
 
 All configuration files are copied from the `.config` directory:
@@ -124,15 +84,15 @@ All configuration files are copied from the `.config` directory:
 ## Troubleshooting
 
 ### "git not found"
+
 Install Xcode Command Line Tools:
+
 ```bash
 xcode-select --install
 ```
 
-### "go not found"
-Download and install Go from: https://go.dev/dl/
-
 ### Permission denied during install
+
 The script will prompt for your sudo password at the very beginning. This is needed to:
 
 - Install kitty to `/Applications`
@@ -140,56 +100,20 @@ The script will prompt for your sudo password at the very beginning. This is nee
 - The password is requested upfront so you don't have to wait through the build process
 
 ### Build fails
+
 Make sure you have:
+
 - Latest Xcode Command Line Tools
-- Go 1.20 or later
 - Stable internet connection
-
-## Manual Installation
-
-If you prefer to run the steps manually:
-
-1. **Install kitty**:
-   ```bash
-   cd /tmp
-   git clone https://github.com/kovidgoyal/kitty.git
-   cd kitty
-   ./dev.sh build
-   ./dev.sh deps --for-docs
-   ./dev.sh docs
-   # ... (see kitty/install-kitty.sh for full steps)
-   ```
-
-2. **Setup environment**:
-   ```bash
-   git clone https://github.com/sudosaturn/ShellDup.git
-   cd ShellDup
-   bash setup-duplicate.sh
-   ```
-
-## Uninstallation
-
-To remove everything:
-
-```bash
-# Remove kitty
-sudo rm -rf /Applications/kitty.app
-
-# Remove configurations (backup first!)
-rm -rf ~/.config/{kitty,yazi,lazygit,neofetch,starship.toml}
-rm ~/.zshrc
-
-# Uninstall Homebrew packages (optional)
-brew uninstall starship eza bat yazi lazygit # ... etc
-```
 
 ## Support
 
 For issues or questions:
+
 - Check the [kitty documentation](https://sw.kovidgoyal.net/kitty/)
 - Review configuration files in `.config/`
 - Open an issue on GitHub
 
 ---
 
-**Note**: This installer is designed for macOS. For other platforms, manual installation is required.
+**Note**: This installer is designed for macOS only.
