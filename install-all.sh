@@ -126,31 +126,31 @@ if [ -d ~/.config ]; then
 fi
 
 print_progress "Configuring macOS defaults..."
-defaults write com.apple.finder QuitMenuItem -bool true 2>/dev/null
-defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false 2>/dev/null
-defaults write com.apple.finder AppleShowAllFiles -bool true 2>/dev/null
-defaults write com.apple.finder ShowPathbar -bool true 2>/dev/null
-defaults write com.apple.finder FXDefaultSearchScope -string SCcf 2>/dev/null
-defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false 2>/dev/null
-defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false 2>/dev/null
-defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false 2>/dev/null
-defaults write com.apple.finder ShowMountedServersOnDesktop -bool false 2>/dev/null
-defaults write com.apple.finder NewWindowTarget -string PfHm 2>/dev/null
-defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/" 2>/dev/null
-defaults write com.apple.finder QLEnableTextSelection -bool true 2>/dev/null
-defaults write com.apple.LaunchServices LSQuarantine -bool false 2>/dev/null
-defaults write com.apple.Safari IncludeDevelopMenu -bool true 2>/dev/null
-defaults write com.apple.Safari IncludeInternalDebugMenu -bool true 2>/dev/null
-defaults write com.apple.Safari WebKitDeveloperExtras -bool true 2>/dev/null
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true 2>/dev/null
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true 2>/dev/null
-defaults write com.apple.frameworks.diskimages skip-verify -bool true 2>/dev/null
-defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true 2>/dev/null
-defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true 2>/dev/null
-defaults write com.apple.CrashReporter DialogType -string none 2>/dev/null
-defaults write com.apple.AdLib forceLimitAdTracking -bool true 2>/dev/null
-defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false 2>/dev/null
-defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false 2>/dev/null
+defaults write com.apple.finder QuitMenuItem -bool true &>/dev/null
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false &>/dev/null
+defaults write com.apple.finder AppleShowAllFiles -bool true &>/dev/null
+defaults write com.apple.finder ShowPathbar -bool true &>/dev/null
+defaults write com.apple.finder FXDefaultSearchScope -string SCcf &>/dev/null
+defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false &>/dev/null
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false &>/dev/null
+defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false &>/dev/null
+defaults write com.apple.finder ShowMountedServersOnDesktop -bool false &>/dev/null
+defaults write com.apple.finder NewWindowTarget -string PfHm &>/dev/null
+defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/" &>/dev/null
+defaults write com.apple.finder QLEnableTextSelection -bool true &>/dev/null
+defaults write com.apple.LaunchServices LSQuarantine -bool false &>/dev/null
+defaults write com.apple.Safari IncludeDevelopMenu -bool true &>/dev/null
+defaults write com.apple.Safari IncludeInternalDebugMenu -bool true &>/dev/null
+defaults write com.apple.Safari WebKitDeveloperExtras -bool true &>/dev/null
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true &>/dev/null
+defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true &>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify -bool true &>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true &>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true &>/dev/null
+defaults write com.apple.CrashReporter DialogType -string none &>/dev/null
+defaults write com.apple.AdLib forceLimitAdTracking -bool true &>/dev/null
+defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false &>/dev/null
+defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false &>/dev/null
 finish_step
 
 print_step "[2/15] Cloning repository..."
