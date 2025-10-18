@@ -192,14 +192,25 @@ echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
 echo -e "${CYAN}[11/15]${NC} Fixing library paths in app bundle..."
-# Create lib directory inside the app bundle
+# Create Frameworks directory inside the app bundle
 mkdir -p kitty.app/Contents/Frameworks
+
+# Copy Python framework into the app
+echo "Copying Python framework..."
+cp -r dependencies/darwin-arm64/python/Python.framework kitty.app/Contents/Frameworks/ 2>/dev/null || true
 
 # Copy all required dylibs into the app
 cp -r dependencies/darwin-arm64/lib/*.dylib kitty.app/Contents/Frameworks/ 2>/dev/null || true
 
 # Fix library paths using install_name_tool
 KITTY_BINARY="kitty.app/Contents/MacOS/kitty"
+
+# Fix Python framework path in the main binary
+echo "Fixing Python framework path..."
+sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/3.12/Python" "@executable_path/../Frameworks/Python.framework/Versions/3.12/Python" "$KITTY_BINARY" 2>/dev/null || true
+
+# Fix dylib paths in the main binary
+echo "Fixing dylib paths..."
 for lib in kitty.app/Contents/Frameworks/*.dylib; do
     lib_name=$(basename "$lib")
     # Change the library path in the binary to use @executable_path
