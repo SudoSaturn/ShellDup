@@ -217,7 +217,7 @@ echo "Fixing Python framework path..."
 sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/3.12/Python" "@executable_path/../Frameworks/Python.framework/Versions/3.12/Python" "$KITTY_BINARY" 2>/dev/null || true
 
 # Fix dylib paths in the main binary
-echo "Fixing dylib paths..."
+echo "Fixing dylib paths in main binary..."
 for lib in kitty.app/Contents/Frameworks/*.dylib; do
     lib_name=$(basename "$lib")
     # Change the library path in the binary to use @executable_path
@@ -229,6 +229,19 @@ for lib in kitty.app/Contents/Frameworks/*.dylib; do
         dep_name=$(basename "$dep")
         sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$dep_name" "@executable_path/../Frameworks/$dep_name" "$lib" 2>/dev/null || true
     done
+done
+
+# Fix library paths in all .so files (Python extension modules)
+echo "Fixing dylib paths in Python modules..."
+find kitty.app/Contents/Resources/kitty -name "*.so" -type f | while read so_file; do
+    for lib in kitty.app/Contents/Frameworks/*.dylib; do
+        lib_name=$(basename "$lib")
+        # Calculate relative path from .so file to Frameworks
+        # .so files are in Contents/Resources/kitty/*, Frameworks is in Contents/Frameworks
+        sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$lib_name" "@loader_path/../../../Frameworks/$lib_name" "$so_file" 2>/dev/null || true
+    done
+    # Also fix Python framework reference in .so files
+    sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/3.12/Python" "@loader_path/../../../Frameworks/Python.framework/Versions/3.12/Python" "$so_file" 2>/dev/null || true
 done
 echo -e "${GREEN}✓${NC} Library paths fixed"
 
