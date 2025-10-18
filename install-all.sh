@@ -89,7 +89,7 @@ brew install --quiet \
     telnet \
     bat \
     spotify_player \
-    tv \
+    television \
     mise \
     gh \
     git \
