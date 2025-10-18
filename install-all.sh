@@ -33,14 +33,16 @@ print_step() {
     # Move up 2 lines to overwrite previous step if it exists
     if [ "$STEP_PRINTED" = true ]; then
         echo -ne "\033[2A\r\033[K"
+    else
+        STEP_PRINTED=true
     fi
-    echo -e "${CYAN}${step}${NC}"
-    STEP_PRINTED=true
+    # Print step without newline, then add newline for progress line
+    echo -ne "${CYAN}${step}${NC}\n"
 }
 
 finish_step() {
-    # Move cursor up, clear both lines and print step with checkmark
-    echo -ne "\033[1A\r\033[K${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n"
+    # Move cursor up 2 lines, clear and print step with checkmark, then newline for next step
+    echo -ne "\033[2A\r\033[K${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n\r\033[K"
 }
 
 clear
