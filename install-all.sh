@@ -17,6 +17,26 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Progress display function
+CURRENT_STEP=""
+print_progress() {
+    local message="$1"
+    # Clear the line and print the progress message
+    echo -ne "\r\033[K${BLUE}  ↳${NC} $message"
+}
+
+print_step() {
+    local step="$1"
+    CURRENT_STEP="$step"
+    echo -e "\n${CYAN}${step}${NC}"
+}
+
+finish_step() {
+    # Clear the progress line and print completion
+    echo -ne "\r\033[K"
+    echo -e "${GREEN}✓${NC} Complete"
+}
+
 clear
 echo ""
 echo "               _          __          "
@@ -55,123 +75,134 @@ SHELLDUP_DIR="/tmp/shelldup-$$"
 KITTY_DIR="$SHELLDUP_DIR/kitty"
 KITTY_TEMP_DIR="/tmp/kitty-official-$$"
 
-echo -e "${CYAN}[1/15]${NC} installing prerequisites..."
+print_step "[1/15] Installing prerequisites..."
 for pkg in jless git starship cmake less gnu-sed wget zoxide eza fd fzf ripgrep dust tldr tig btop tree tmux hyperfine neovim neofetch yazi lazygit lazydocker nali aria2 apidog httpie nmap telnet bat spotify_player television mise gh node python rust go unar sevenzip brotli upx ffmpeg graphviz exiftool ffmpegthumbnailer jq jc hugo duti pipx rar; do
+    print_progress "Installing $pkg..."
     brew install --quiet "$pkg" 2>/dev/null || true
 done
 
+print_progress "Tapping oven-sh/bun..."
 brew tap oven-sh/bun 2>/dev/null || true
 for pkg in pnpm bun; do
+    print_progress "Installing $pkg..."
     brew install --quiet "$pkg" 2>/dev/null || true
 done
 
 for pkg in lua luarocks php composer; do
+    print_progress "Installing $pkg..."
     brew install --quiet "$pkg" 2>/dev/null || true
 done
 
+print_progress "Installing psy/psysh..."
 composer global require psy/psysh 2>/dev/null || true
+print_progress "Installing ranger..."
 pipx install git+https://github.com/ranger/ranger.git 2>/dev/null || true
+print_progress "Injecting Pillow into ranger..."
 pipx inject ranger-fm Pillow 2>/dev/null || true
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || true
+print_progress "Installing rustup..."
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y 2>/dev/null || true
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
+    print_progress "Installing oh-my-zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended 2>/dev/null || true
 fi
-pipx upgrade-all || true
+print_progress "Upgrading pipx packages..."
+pipx upgrade-all 2>/dev/null || true
+print_progress "Backing up configs..."
 mkdir -p ~/.config-backup
 [ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/ 2>/dev/null || true
 [ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/ 2>/dev/null || true
-# Backup only specific config directories, skip nix and other problematic paths
 if [ -d ~/.config ]; then
     for dir in starship yazi kitty nvim lazygit tmux btop bat neofetch spotify_player; do
         [ -d ~/.config/$dir ] && cp -r ~/.config/$dir ~/.config-backup/ 2>/dev/null || true
     done
 fi
 
-# Copy shell configurations
-defaults write com.apple.finder QuitMenuItem -bool true
-defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-defaults write com.apple.finder AppleShowAllFiles -bool true
-defaults write com.apple.finder ShowPathbar -bool true
-defaults write com.apple.finder FXDefaultSearchScope -string SCcf
-defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
-defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false
-defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false
-defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
-defaults write com.apple.finder NewWindowTarget -string PfHm
-defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
-defaults write com.apple.finder QLEnableTextSelection -bool true
-defaults write com.apple.LaunchServices LSQuarantine -bool false
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtras -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
-defaults write com.apple.frameworks.diskimages skip-verify -bool true
-defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true
-defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true
-defaults write com.apple.CrashReporter DialogType -string none
-defaults write com.apple.AdLib forceLimitAdTracking -bool true
-defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false
-defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false
-echo -e "${GREEN}✓${NC} Prerequisites OK"
+print_progress "Configuring macOS defaults..."
+defaults write com.apple.finder QuitMenuItem -bool true 2>/dev/null
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false 2>/dev/null
+defaults write com.apple.finder AppleShowAllFiles -bool true 2>/dev/null
+defaults write com.apple.finder ShowPathbar -bool true 2>/dev/null
+defaults write com.apple.finder FXDefaultSearchScope -string SCcf 2>/dev/null
+defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false 2>/dev/null
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false 2>/dev/null
+defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false 2>/dev/null
+defaults write com.apple.finder ShowMountedServersOnDesktop -bool false 2>/dev/null
+defaults write com.apple.finder NewWindowTarget -string PfHm 2>/dev/null
+defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/" 2>/dev/null
+defaults write com.apple.finder QLEnableTextSelection -bool true 2>/dev/null
+defaults write com.apple.LaunchServices LSQuarantine -bool false 2>/dev/null
+defaults write com.apple.Safari IncludeDevelopMenu -bool true 2>/dev/null
+defaults write com.apple.Safari IncludeInternalDebugMenu -bool true 2>/dev/null
+defaults write com.apple.Safari WebKitDeveloperExtras -bool true 2>/dev/null
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true 2>/dev/null
+defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true 2>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify -bool true 2>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true 2>/dev/null
+defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true 2>/dev/null
+defaults write com.apple.CrashReporter DialogType -string none 2>/dev/null
+defaults write com.apple.AdLib forceLimitAdTracking -bool true 2>/dev/null
+defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false 2>/dev/null
+defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false 2>/dev/null
+finish_step
 
-echo ""
-echo -e "${CYAN}[2/15]${NC} Cloning repository..."
+print_step "[2/15] Cloning repository..."
+print_progress "Removing old directory..."
 rm -rf "$SHELLDUP_DIR"
+print_progress "Cloning from GitHub..."
 git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Repository cloned"
+finish_step
 
 cd "$KITTY_DIR" || exit 1
 
-echo ""
-echo -e "${CYAN}[4/15]${NC} Cleaning build directory..."
+print_step "[4/15] Cleaning build directory..."
+print_progress "Removing old build files..."
 rm -rf build dependencies kitty.app 2>/dev/null || true
-echo -e "${GREEN}✓${NC} Cleaned"
+finish_step
 
-echo ""
-echo -e "${CYAN}[5/15]${NC} Downloading dependencies (may take several minutes)..."
+print_step "[5/15] Downloading dependencies..."
+print_progress "Downloading (this may take several minutes)..."
 ./dev.sh deps &>/dev/null || {
     echo -e "${RED}Error: Failed to download dependencies${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Dependencies downloaded"
+finish_step
 
-echo ""
-echo -e "${CYAN}[6/15]${NC} Building kitty (may take several minutes)..."
+print_step "[6/15] Building kitty..."
+print_progress "Building (this may take several minutes)..."
 ./dev.sh build &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Kitty built"
+finish_step
 
-echo ""
-echo -e "${CYAN}[7/15]${NC} Installing documentation dependencies..."
+print_step "[7/15] Installing documentation dependencies..."
+print_progress "Installing doc dependencies..."
 ./dev.sh deps --for-docs &>/dev/null || {
     echo -e "${RED}Error: Failed to install doc dependencies${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Doc dependencies installed"
+finish_step
 
-echo ""
-echo -e "${CYAN}[8/15]${NC} Setting up sphinx tools..."
+print_step "[8/15] Setting up sphinx tools..."
+print_progress "Creating symlinks..."
 mkdir -p dependencies/darwin-arm64/bin
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-build dependencies/darwin-arm64/bin/sphinx-build 2>/dev/null || true
 ln -sf ../python/Python.framework/Versions/3.12/bin/sphinx-autobuild dependencies/darwin-arm64/bin/sphinx-autobuild 2>/dev/null || true
-echo -e "${GREEN}✓${NC} Sphinx tools setup"
+finish_step
 
-echo ""
-echo -e "${CYAN}[9/15]${NC} Building documentation..."
+print_step "[9/15] Building documentation..."
+print_progress "Building docs..."
 ./dev.sh docs &>/dev/null || {
     echo -e "${RED}Error: Failed to build documentation${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Documentation built"
+finish_step
 
-echo ""
-echo -e "${CYAN}[10/15]${NC} Building macOS app bundle..."
+print_step "[10/15] Building macOS app bundle..."
+print_progress "Patching setup.py..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
     if not for_freeze:\
@@ -184,6 +215,7 @@ if ! grep -q "kitten_symlink = os.path.join" setup.py; then
         os.symlink(os.path.relpath(kitten_exe, os.path.dirname(in_src_launcher)), kitten_symlink)
 ' setup.py
 fi
+print_progress "Building app bundle..."
 rm -rf kitty.app
 DEVELOP_ROOT="$KITTY_DIR/dependencies/darwin-arm64" \
 PKG_CONFIG_PATH="$KITTY_DIR/dependencies/darwin-arm64/lib/pkgconfig" \
@@ -193,98 +225,88 @@ setup.py kitty.app &>/dev/null || {
     echo -e "${RED}Error: Failed to build kitty.app${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} App bundle created"
+finish_step
 
-echo ""
-echo -e "${CYAN}[11/15]${NC} Fixing library paths in app bundle..."
+print_step "[11/15] Fixing library paths in app bundle..."
 # Refresh sudo
 sudo -v
-# Create Frameworks directory inside the app bundle
+print_progress "Creating Frameworks directory..."
 mkdir -p kitty.app/Contents/Frameworks
 
-# Copy Python framework into the app
-echo "Copying Python framework..."
+print_progress "Copying Python framework..."
 cp -r dependencies/darwin-arm64/python/Python.framework kitty.app/Contents/Frameworks/ 2>/dev/null || true
 
-# Copy all required dylibs into the app
+print_progress "Copying dylibs..."
 cp -r dependencies/darwin-arm64/lib/*.dylib kitty.app/Contents/Frameworks/ 2>/dev/null || true
 
-# Fix library paths using install_name_tool
 KITTY_BINARY="kitty.app/Contents/MacOS/kitty"
 
-# Fix Python framework path in the main binary
-echo "Fixing Python framework path..."
+print_progress "Fixing Python framework path..."
 sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/3.12/Python" "@executable_path/../Frameworks/Python.framework/Versions/3.12/Python" "$KITTY_BINARY" 2>/dev/null || true
 
-# Fix dylib paths in the main binary
-echo "Fixing dylib paths in main binary..."
+print_progress "Fixing dylib paths in main binary..."
 for lib in kitty.app/Contents/Frameworks/*.dylib; do
     lib_name=$(basename "$lib")
-    # Change the library path in the binary to use @executable_path
     sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$lib_name" "@executable_path/../Frameworks/$lib_name" "$KITTY_BINARY" 2>/dev/null || true
-    # Fix the library's own id
     sudo install_name_tool -id "@executable_path/../Frameworks/$lib_name" "$lib" 2>/dev/null || true
-    # Fix dependencies within the library itself
     for dep in kitty.app/Contents/Frameworks/*.dylib; do
         dep_name=$(basename "$dep")
         sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$dep_name" "@executable_path/../Frameworks/$dep_name" "$lib" 2>/dev/null || true
     done
 done
 
-# Fix library paths in all .so files (Python extension modules)
-echo "Fixing dylib paths in Python modules..."
+print_progress "Fixing dylib paths in Python modules..."
 find kitty.app/Contents/Resources/kitty -name "*.so" -type f | while read so_file; do
     for lib in kitty.app/Contents/Frameworks/*.dylib; do
         lib_name=$(basename "$lib")
-        # Calculate relative path from .so file to Frameworks
-        # .so files are in Contents/Resources/kitty/*, Frameworks is in Contents/Frameworks
         sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/lib/$lib_name" "@loader_path/../../../Frameworks/$lib_name" "$so_file" 2>/dev/null || true
     done
-    # Also fix Python framework reference in .so files
     sudo install_name_tool -change "$KITTY_DIR/dependencies/darwin-arm64/python/Python.framework/Versions/3.12/Python" "@loader_path/../../../Frameworks/Python.framework/Versions/3.12/Python" "$so_file" 2>/dev/null || true
 done
-echo -e "${GREEN}✓${NC} Library paths fixed"
+finish_step
 
-echo ""
-echo -e "${CYAN}[12/15]${NC} Installing to /Applications..."
+print_step "[12/15] Installing to /Applications..."
 # Refresh sudo
 sudo -v
+print_progress "Removing old installation..."
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
+print_progress "Moving to /Applications..."
 sudo mv kitty.app /Applications/ || {
     echo -e "${RED}Error: Failed to install to /Applications${NC}"
     exit 1
 }
-echo -e "${GREEN}✓${NC} Installed to /Applications"
+finish_step
 
-echo ""
-echo -e "${CYAN}[13/15]${NC} Removing Gatekeeper restrictions..."
+print_step "[13/15] Removing Gatekeeper restrictions..."
 # Refresh sudo
 sudo -v
+print_progress "Removing quarantine attributes..."
 sudo xattr -cr /Applications/kitty.app 2>/dev/null || true
 sudo xattr -d com.apple.quarantine /Applications/kitty.app 2>/dev/null || true
+print_progress "Code signing..."
 sudo codesign --force --deep --sign - /Applications/kitty.app 2>/dev/null || true
+print_progress "Updating security policy..."
 sudo spctl --add --label "kitty" /Applications/kitty.app 2>/dev/null || true
 sudo spctl --enable --label "kitty" 2>/dev/null || true
-echo -e "${GREEN}✓${NC} Gatekeeper restrictions removed"
+finish_step
 
-echo ""
-echo -e "${CYAN}[14/15]${NC} Cleaning up kitty build files..."
+print_step "[14/15] Cleaning up kitty build files..."
+print_progress "Removing build directory..."
 cd "$SHELLDUP_DIR" || exit 1
 rm -rf "$KITTY_DIR"
-echo -e "${GREEN}✓${NC} Build files cleaned"
+finish_step
 
-echo ""
-echo -e "${CYAN}[15/15]${NC} Running setup script..."
+print_step "[15/15] Running setup script..."
 
 # Use the cloned repository directory
 SCRIPT_DIR="$SHELLDUP_DIR"
 
-# Copy .zshrc
+print_progress "Copying .zshrc..."
 cp "$SCRIPT_DIR/.zshrc" ~/.zshrc
 
-# .zprofile
+print_progress "Creating .zprofile..."
 cat > ~/.zprofile << 'EOF'
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -293,64 +315,61 @@ PATH="/Library/Frameworks/Python.framework/Versions/3.13/bin:${PATH}"
 export PATH
 EOF
 
-
+print_progress "Creating config directories..."
 mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify_player} 2>/dev/null || true
 
-# Copy starship config
+print_progress "Copying starship config..."
 cp "$SCRIPT_DIR/.config/starship.toml" ~/.config/starship.toml
 
-# Copy yazi configs
+print_progress "Copying yazi configs..."
 cp -r "$SCRIPT_DIR/.config/yazi/"* ~/.config/yazi/
 
-# Copy kitty configs
+print_progress "Copying kitty configs..."
 cp -r "$SCRIPT_DIR/.config/kitty/"* ~/.config/kitty/
 
-# JetBrains Mono Nerd Font
-brew install --cask font-jetbrains-mono-nerd-font
+print_progress "Installing JetBrains Mono Nerd Font..."
+brew install --cask font-jetbrains-mono-nerd-font 2>/dev/null || true
 
-# Copy lazygit config
+print_progress "Copying lazygit config..."
 cp "$SCRIPT_DIR/.config/lazygit/config.yml" ~/.config/lazygit/config.yml
 
-
 if ! command -v mise &> /dev/null; then
-    curl https://mise.run | sh
+    print_progress "Installing mise..."
+    curl https://mise.run | sh 2>/dev/null || true
 fi
 
-# Set up Git configuration
-# log "Setting up Git configuration..."
+print_progress "Configuring Git..."
 git config --global init.defaultBranch main
 git config --global pull.rebase false
 
+print_progress "Creating completions directory..."
 mkdir -p ~/.zsh/completions
 
-#  Catppuccin themes for other stuff
-# log "Installing Catppuccin themes..."
-
+print_progress "Installing Catppuccin theme for bat..."
 mkdir -p ~/.config/bat/themes
 if [ ! -f ~/.config/bat/themes/Catppuccin-macchiato.tmTheme ]; then
     curl -s https://raw.githubusercontent.com/catppuccin/bat/main/Catppuccin-macchiato.tmTheme > ~/.config/bat/themes/Catppuccin-macchiato.tmTheme
-    bat cache --build
+    bat cache --build 2>/dev/null || true
 fi
 
+print_progress "Installing Catppuccin theme for kitty..."
 mkdir -p ~/.config/kitty/themes/catppuccin
 if [ ! -f ~/.config/kitty/themes/catppuccin/macchiato.conf ]; then
     curl -s https://raw.githubusercontent.com/catppuccin/kitty/main/macchiato.conf > ~/.config/kitty/themes/catppuccin/macchiato.conf
 fi
 
-# Copy neofetch config
+print_progress "Copying neofetch config..."
 if [ ! -f ~/.config/neofetch/config.conf ]; then
-    cp "$SCRIPT_DIR/.config/neofetch/config.conf" ~/.config/neofetch/config.conf
+    cp "$SCRIPT_DIR/.config/neofetch/config.conf" ~/.config/neofetch/config.conf 2>/dev/null || true
 else
-    echo "$(cat "$SCRIPT_DIR/.config/neofetch/config.conf")" >> ~/.config/neofetch/config.conf
+    echo "$(cat "$SCRIPT_DIR/.config/neofetch/config.conf")" >> ~/.config/neofetch/config.conf 2>/dev/null || true
 fi
 
-echo -e "${GREEN}✓${NC} Setup complete"
+finish_step
 
-echo ""
-echo -e "${CYAN}Final cleanup...${NC}"
+print_progress "Final cleanup..."
 cd "$HOME" || exit 1
 rm -rf "$SHELLDUP_DIR"
-echo -e "${GREEN}✓${NC} Cleanup complete"
 
 clear
 echo ""
