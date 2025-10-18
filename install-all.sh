@@ -19,22 +19,31 @@ NC='\033[0m' # No Color
 
 # Progress display function
 CURRENT_STEP=""
+STEP_PRINTED=false
+
 print_progress() {
     local message="$1"
-    # Clear the line and print the progress message
+    # Move cursor up if step was already printed, clear line and print progress
+    if [ "$STEP_PRINTED" = true ]; then
+        echo -ne "\033[1A\r\033[K${CYAN}${CURRENT_STEP}${NC}\n"
+    fi
     echo -ne "\r\033[K${BLUE}  ↳${NC} $message"
 }
 
 print_step() {
     local step="$1"
     CURRENT_STEP="$step"
-    echo -e "\n${CYAN}${step}${NC}"
+    # Move up 2 lines to overwrite previous step if it exists
+    if [ "$STEP_PRINTED" = true ]; then
+        echo -ne "\033[2A\r\033[K"
+    fi
+    echo -e "${CYAN}${step}${NC}"
+    STEP_PRINTED=true
 }
 
 finish_step() {
-    # Clear the progress line and print completion
-    echo -ne "\r\033[K"
-    echo -e "${GREEN}✓${NC} Complete"
+    # Move cursor up, clear both lines and print step with checkmark
+    echo -ne "\033[1A\r\033[K${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n"
 }
 
 clear
