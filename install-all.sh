@@ -429,6 +429,10 @@ if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/local/bin/zsh" ] && [ "$SHE
 fi
 
 echo ""
-echo -e "${CYAN}Starting btop panel...${NC}"
+echo -e "${CYAN}Launching kitty with btop panel...${NC}"
 sleep 1
-~/.config/kitty/btop.sh &>/dev/null &
+# Open kitty and run btop.sh inside it
+open -a kitty
+sleep 2
+# Run btop.sh via kitty remote control
+/Applications/kitty.app/Contents/MacOS/kitty @ launch --type=background ~/.config/kitty/btop.sh 2>/dev/null || true
