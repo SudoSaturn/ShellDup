@@ -78,9 +78,14 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
 fi
 pipx upgrade-all || true
 mkdir -p ~/.config-backup
-[ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/
-[ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/
-[ -d ~/.config ] && cp -r ~/.config ~/.config-backup/
+[ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/ 2>/dev/null || true
+[ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/ 2>/dev/null || true
+# Backup only specific config directories, skip nix and other problematic paths
+if [ -d ~/.config ]; then
+    for dir in starship yazi kitty nvim lazygit tmux btop bat neofetch spotify_player; do
+        [ -d ~/.config/$dir ] && cp -r ~/.config/$dir ~/.config-backup/ 2>/dev/null || true
+    done
+fi
 
 # Copy shell configurations
 defaults write com.apple.finder QuitMenuItem -bool true
