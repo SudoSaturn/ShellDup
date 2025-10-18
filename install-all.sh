@@ -340,6 +340,7 @@ mkdir -p ~/.config/bat/themes
 if [ ! -f ~/.config/bat/themes/Catppuccin-macchiato.tmTheme ]; then
     curl -s https://raw.githubusercontent.com/catppuccin/bat/main/Catppuccin-macchiato.tmTheme > ~/.config/bat/themes/Catppuccin-macchiato.tmTheme
     bat cache --build
+fi
 
 mkdir -p ~/.config/kitty/themes/catppuccin
 if [ ! -f ~/.config/kitty/themes/catppuccin/macchiato.conf ]; then
