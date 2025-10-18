@@ -56,73 +56,27 @@ KITTY_DIR="$SHELLDUP_DIR/kitty"
 KITTY_TEMP_DIR="/tmp/kitty-official-$$"
 
 echo -e "${CYAN}[1/15]${NC} installing prerequisites..."
-brew install --quiet \
-    jless \
-    git \
-    starship \
-    cmake \
-    less \
-    gnu-sed \
-    wget \
-    zoxide \
-    eza \
-    fd \
-    fzf \
-    ripgrep \
-    dust \
-    tldr \
-    tig \
-    btop \
-    tree \
-    tmux \
-    hyperfine\
-    neovim \
-    neofetch \
-    yazi \
-    lazygit \
-    lazydocker \
-    nali \
-    aria2 \
-    apidog \
-    httpie \
-    nmap \
-    telnet \
-    bat \
-    spotify_player \
-    television \
-    mise \
-    gh \
-    git \
-    node \
-    python \
-    rust \
-    go \
-    unar \
-    sevenzip \
-    brotli \
-    upx \
-    ffmpeg \
-    graphviz \
-    exiftool \
-    ffmpegthumbnailer \
-    jq \
-    jc \
-    hugo \
-    duti \
-    pipx \
-    rar || true
+for pkg in jless git starship cmake less gnu-sed wget zoxide eza fd fzf ripgrep dust tldr tig btop tree tmux hyperfine neovim neofetch yazi lazygit lazydocker nali aria2 apidog httpie nmap telnet bat spotify_player television mise gh node python rust go unar sevenzip brotli upx ffmpeg graphviz exiftool ffmpegthumbnailer jq jc hugo duti pipx rar; do
+    brew install --quiet "$pkg" 2>/dev/null || true
+done
 
-brew tap oven-sh/bun || true
-brew install node pnpm bun || true
-brew install lua luarocks php composer || true
-composer global require psy/psysh || true
-pipx install git+https://github.com/ranger/ranger.git || true
-pipx inject ranger Pillow || true
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+brew tap oven-sh/bun 2>/dev/null || true
+for pkg in pnpm bun; do
+    brew install --quiet "$pkg" 2>/dev/null || true
+done
+
+for pkg in lua luarocks php composer; do
+    brew install --quiet "$pkg" 2>/dev/null || true
+done
+
+composer global require psy/psysh 2>/dev/null || true
+pipx install git+https://github.com/ranger/ranger.git 2>/dev/null || true
+pipx inject ranger Pillow 2>/dev/null || true
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || true
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
 fi
-pipx upgrade-all
+pipx upgrade-all || true
 mkdir -p ~/.config-backup
 [ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/
 [ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/
