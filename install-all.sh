@@ -23,34 +23,24 @@ STEP_PRINTED=false
 
 print_progress() {
     local message="$1"
-    # Move to beginning of line, clear it, then print
-    tput cr 2>/dev/null || printf "\r"
-    tput el 2>/dev/null || printf "\033[K"
-    printf "${BLUE}  ↳${NC} %s" "$message"
+    # Just overwrite the current line
+    printf "\r\033[K${BLUE}  ↳${NC} %s" "$message"
 }
 
 print_step() {
     local step="$1"
     CURRENT_STEP="$step"
-    # Move up 2 lines to overwrite previous step if it exists
+    # Clear previous progress line and print new step
     if [ "$STEP_PRINTED" = true ]; then
-        tput cuu 2 2>/dev/null || printf "\033[2A"
-        tput cr 2>/dev/null || printf "\r"
-        tput el 2>/dev/null || printf "\033[K"
-    else
-        STEP_PRINTED=true
+        printf "\r\033[K"
     fi
-    # Print step and newline for progress line
     printf "${CYAN}${step}${NC}\n"
+    STEP_PRINTED=true
 }
 
 finish_step() {
-    # Move cursor up 2 lines, clear and print step with checkmark
-    tput cuu 2 2>/dev/null || printf "\033[2A"
-    tput cr 2>/dev/null || printf "\r"
-    tput el 2>/dev/null || printf "\033[K"
-    printf "${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n"
-    tput el 2>/dev/null || printf "\033[K"
+    # Clear progress line and show completion on same line as step
+    printf "\r\033[K${GREEN}✓${NC} Done\n"
 }
 
 clear
