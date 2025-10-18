@@ -376,6 +376,36 @@ else
     echo "$(cat "$SCRIPT_DIR/.config/neofetch/config.conf")" >> ~/.config/neofetch/config.conf 2>/dev/null || true
 fi
 
+print_progress "Configuring btop to run at login..."
+# Make btop.sh executable
+chmod +x ~/.config/kitty/btop.sh
+
+# Create LaunchAgent to run btop at login
+mkdir -p ~/Library/LaunchAgents
+cat > ~/Library/LaunchAgents/com.user.kitty.btop.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.kitty.btop</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-c</string>
+        <string>sleep 3 && ~/.config/kitty/btop.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+EOF
+
+# Load the LaunchAgent
+launchctl load ~/Library/LaunchAgents/com.user.kitty.btop.plist 2>/dev/null || true
+
 finish_step
 
 print_progress "Final cleanup..."
@@ -394,6 +424,11 @@ sleep 2
 source ~/.zshrc 2>/dev/null || true
 
 if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/local/bin/zsh" ] && [ "$SHELL" != "/opt/homebrew/bin/zsh" ]; then
-    log "Setting zsh as default shell..."
+    echo -e "${YELLOW}Setting zsh as default shell...${NC}"
     chsh -s $(which zsh)
 fi
+
+echo ""
+echo -e "${CYAN}Starting btop panel...${NC}"
+sleep 1
+~/.config/kitty/btop.sh &>/dev/null &
