@@ -32,7 +32,7 @@ alias gut="lazygit"
 # Environment variables
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-export PATH="/Users/sudosaturn/.codeium/windsurf/bin:$PATH"
+export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
 
 # Lazy load completions directory
@@ -96,7 +96,7 @@ eval "$(starship init zsh)"
 
 alias composer="/Applications/Adam/server/php/bin/php /Applications/Adam/server/tools/composer"
 
-eval "$(/Users/sudosaturn/.local/bin/mise activate zsh)" # added by https://mise.run/zsh
+eval "$(mise activate zsh)" # added by https://mise.run/zsh
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 eval "$(tv init zsh)"
 alias spotif="spotify_player"
