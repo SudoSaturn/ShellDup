@@ -23,8 +23,8 @@ STEP_PRINTED=false
 
 print_progress() {
     local message="$1"
-    # Just clear current line and print progress (no cursor movement)
-    echo -ne "\r\033[K${BLUE}  ↳${NC} $message"
+    # Use printf instead of echo for better control, and explicitly flush
+    printf "\r\033[2K${BLUE}  ↳${NC} %s" "$message"
 }
 
 print_step() {
