@@ -212,7 +212,11 @@ finish_step
 
 print_step "[10/15] Building macOS app bundle..."
 # Refresh sudo for upcoming operations
+echo ""
+echo -e "${YELLOW}⚠ Sudo access needed for app bundle operations${NC}"
+echo -e "${YELLOW}Please enter your password:${NC}"
 sudo -v
+echo ""
 print_progress "Patching setup.py..."
 if ! grep -q "kitten_symlink = os.path.join" setup.py; then
     sed -i '' '/if not for_freeze:/,/os.symlink(os.path.relpath(kitten_exe/c\
