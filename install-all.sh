@@ -192,6 +192,8 @@ echo -e "${GREEN}✓${NC} App bundle created"
 
 echo ""
 echo -e "${CYAN}[11/15]${NC} Fixing library paths in app bundle..."
+# Refresh sudo
+sudo -v
 # Create Frameworks directory inside the app bundle
 mkdir -p kitty.app/Contents/Frameworks
 
@@ -227,6 +229,8 @@ echo -e "${GREEN}✓${NC} Library paths fixed"
 
 echo ""
 echo -e "${CYAN}[12/15]${NC} Installing to /Applications..."
+# Refresh sudo
+sudo -v
 if [ -d "/Applications/kitty.app" ]; then
     sudo rm -rf "/Applications/kitty.app"
 fi
@@ -238,6 +242,8 @@ echo -e "${GREEN}✓${NC} Installed to /Applications"
 
 echo ""
 echo -e "${CYAN}[13/15]${NC} Removing Gatekeeper restrictions..."
+# Refresh sudo
+sudo -v
 sudo xattr -cr /Applications/kitty.app 2>/dev/null || true
 sudo xattr -d com.apple.quarantine /Applications/kitty.app 2>/dev/null || true
 sudo codesign --force --deep --sign - /Applications/kitty.app 2>/dev/null || true
@@ -254,9 +260,10 @@ echo -e "${GREEN}✓${NC} Build files cleaned"
 echo ""
 echo -e "${CYAN}[15/15]${NC} Running setup script..."
 
+# Use the cloned repository directory
+SCRIPT_DIR="$SHELLDUP_DIR"
 
 # Copy .zshrc
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp "$SCRIPT_DIR/.zshrc" ~/.zshrc
 
 # .zprofile
