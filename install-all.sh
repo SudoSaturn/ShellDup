@@ -304,7 +304,7 @@ export PATH
 EOF
 
 
-mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify-player} 2>/dev/null || true
+mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify_player} 2>/dev/null || true
 
 # Copy starship config
 cp "$SCRIPT_DIR/.config/starship.toml" ~/.config/starship.toml
