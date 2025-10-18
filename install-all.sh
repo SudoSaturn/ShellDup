@@ -103,19 +103,19 @@ for pkg in lua luarocks php composer; do
 done
 
 print_progress "Installing psy/psysh..."
-composer global require psy/psysh 2>/dev/null || true
+composer global require psy/psysh &>/dev/null || true
 print_progress "Installing ranger..."
-pipx install git+https://github.com/ranger/ranger.git 2>/dev/null || true
+pipx install git+https://github.com/ranger/ranger.git &>/dev/null || true
 print_progress "Injecting Pillow into ranger..."
-pipx inject ranger-fm Pillow 2>/dev/null || true
+pipx inject ranger-fm Pillow &>/dev/null || true
 print_progress "Installing rustup..."
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y 2>/dev/null || true
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y &>/dev/null || true
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     print_progress "Installing oh-my-zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended 2>/dev/null || true
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended &>/dev/null || true
 fi
 print_progress "Upgrading pipx packages..."
-pipx upgrade-all 2>/dev/null || true
+pipx upgrade-all &>/dev/null || true
 print_progress "Backing up configs..."
 mkdir -p ~/.config-backup
 [ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/ 2>/dev/null || true
