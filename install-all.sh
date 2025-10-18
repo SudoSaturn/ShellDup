@@ -23,10 +23,7 @@ STEP_PRINTED=false
 
 print_progress() {
     local message="$1"
-    # Move cursor up if step was already printed, clear line and print progress
-    if [ "$STEP_PRINTED" = true ]; then
-        echo -ne "\033[1A\r\033[K${CYAN}${CURRENT_STEP}${NC}\n"
-    fi
+    # Just clear current line and print progress (no cursor movement)
     echo -ne "\r\033[K${BLUE}  ↳${NC} $message"
 }
 
