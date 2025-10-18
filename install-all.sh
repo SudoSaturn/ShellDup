@@ -23,8 +23,10 @@ STEP_PRINTED=false
 
 print_progress() {
     local message="$1"
-    # Use printf instead of echo for better control, and explicitly flush
-    printf "\r\033[2K${BLUE}  ↳${NC} %s" "$message"
+    # Move to beginning of line, clear it, then print
+    tput cr 2>/dev/null || printf "\r"
+    tput el 2>/dev/null || printf "\033[K"
+    printf "${BLUE}  ↳${NC} %s" "$message"
 }
 
 print_step() {
@@ -32,17 +34,23 @@ print_step() {
     CURRENT_STEP="$step"
     # Move up 2 lines to overwrite previous step if it exists
     if [ "$STEP_PRINTED" = true ]; then
-        echo -ne "\033[2A\r\033[K"
+        tput cuu 2 2>/dev/null || printf "\033[2A"
+        tput cr 2>/dev/null || printf "\r"
+        tput el 2>/dev/null || printf "\033[K"
     else
         STEP_PRINTED=true
     fi
-    # Print step without newline, then add newline for progress line
-    echo -ne "${CYAN}${step}${NC}\n"
+    # Print step and newline for progress line
+    printf "${CYAN}${step}${NC}\n"
 }
 
 finish_step() {
-    # Move cursor up 2 lines, clear and print step with checkmark, then newline for next step
-    echo -ne "\033[2A\r\033[K${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n\r\033[K"
+    # Move cursor up 2 lines, clear and print step with checkmark
+    tput cuu 2 2>/dev/null || printf "\033[2A"
+    tput cr 2>/dev/null || printf "\r"
+    tput el 2>/dev/null || printf "\033[K"
+    printf "${CYAN}${CURRENT_STEP}${NC} ${GREEN}✓${NC}\n"
+    tput el 2>/dev/null || printf "\033[K"
 }
 
 clear
@@ -86,19 +94,22 @@ KITTY_TEMP_DIR="/tmp/kitty-official-$$"
 print_step "[1/15] Installing prerequisites..."
 for pkg in jless git starship cmake less gnu-sed wget zoxide eza fd fzf ripgrep dust tldr tig btop tree tmux hyperfine neovim neofetch yazi lazygit lazydocker nali aria2 apidog httpie nmap telnet bat spotify_player television mise gh node python rust go unar sevenzip brotli upx ffmpeg graphviz exiftool ffmpegthumbnailer jq jc hugo duti pipx rar; do
     print_progress "Installing $pkg..."
-    brew install --quiet "$pkg" 2>/dev/null || true
+    brew install --quiet "$pkg" &>/dev/null || true
+    sleep 0.1
 done
 
 print_progress "Tapping oven-sh/bun..."
-brew tap oven-sh/bun 2>/dev/null || true
+brew tap oven-sh/bun &>/dev/null || true
 for pkg in pnpm bun; do
     print_progress "Installing $pkg..."
-    brew install --quiet "$pkg" 2>/dev/null || true
+    brew install --quiet "$pkg" &>/dev/null || true
+    sleep 0.1
 done
 
 for pkg in lua luarocks php composer; do
     print_progress "Installing $pkg..."
-    brew install --quiet "$pkg" 2>/dev/null || true
+    brew install --quiet "$pkg" &>/dev/null || true
+    sleep 0.1
 done
 
 print_progress "Installing psy/psysh..."
