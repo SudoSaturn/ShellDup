@@ -110,14 +110,14 @@ brew install --quiet \
     hugo \
     duti \
     pipx \
-    rar
+    rar || true
 
-brew tap oven-sh/bun
-brew install node pnpm bun
-brew install lua luarocks php composer
-composer global require psy/psysh
-pipx install git+https://github.com/ranger/ranger.git
-pipx inject ranger Pillow
+brew tap oven-sh/bun || true
+brew install node pnpm bun || true
+brew install lua luarocks php composer || true
+composer global require psy/psysh || true
+pipx install git+https://github.com/ranger/ranger.git || true
+pipx inject ranger Pillow || true
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
