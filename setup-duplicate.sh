@@ -15,103 +15,104 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 log "Installing stuff"
 # Note: kitty is not installed via brew - we use our custom-built version
-brew install --quiet \
-    jless \
-    starship \
-    cmake \
-    less \
-    gnu-sed \
-    wget \
-    zoxide \
-    eza \
-    fd \
-    fzf \
-    ripgrep \
-    dust \
-    tldr \
-    tig \
-    btop \
-    tree \
-    tmux \
-    hyperfine\
-    neovim \
-    neofetch \
-    yazi \
-    lazygit \
-    lazydocker \
-    nali \
-    aria2 \
-    apidog \
-    httpie \
-    nmap \
-    telnet \
-    bat \
-    spotify-player \
-    tv \
-    mise \
-    gh \
-    git \
-    node \
-    python \
-    rust \
-    go \
-    unar \
-    sevenzip \
-    brotli \
-    upx \
-    ffmpeg \
-    graphviz \
-    exiftool \
-    ffmpegthumbnailer \
-    jq \
-    jc \
-    hugo \
-    duti \
-    pipx \
-    rar
+# brew install --quiet \
+#     jless \
+#     git \
+#     starship \
+#     cmake \
+#     less \
+#     gnu-sed \
+#     wget \
+#     zoxide \
+#     eza \
+#     fd \
+#     fzf \
+#     ripgrep \
+#     dust \
+#     tldr \
+#     tig \
+#     btop \
+#     tree \
+#     tmux \
+#     hyperfine\
+#     neovim \
+#     neofetch \
+#     yazi \
+#     lazygit \
+#     lazydocker \
+#     nali \
+#     aria2 \
+#     apidog \
+#     httpie \
+#     nmap \
+#     telnet \
+#     bat \
+#     spotify-player \
+#     tv \
+#     mise \
+#     gh \
+#     git \
+#     node \
+#     python \
+#     rust \
+#     go \
+#     unar \
+#     sevenzip \
+#     brotli \
+#     upx \
+#     ffmpeg \
+#     graphviz \
+#     exiftool \
+#     ffmpegthumbnailer \
+#     jq \
+#     jc \
+#     hugo \
+#     duti \
+#     pipx \
+#     rar
 
-brew tap oven-sh/bun
-brew install node pnpm bun
-brew install lua luarocks php composer
-composer global require psy/psysh
-pipx install git+https://github.com/ranger/ranger.git
-pipx inject ranger Pillow
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
-pipx upgrade-all
-mkdir -p ~/.config-backup
-[ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/
-[ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/
-[ -d ~/.config ] && cp -r ~/.config ~/.config-backup/
+# brew tap oven-sh/bun
+# brew install node pnpm bun
+# brew install lua luarocks php composer
+# composer global require psy/psysh
+# pipx install git+https://github.com/ranger/ranger.git
+# pipx inject ranger Pillow
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+# if [ ! -d "$HOME/.oh-my-zsh" ]; then
+#     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# fi
+# pipx upgrade-all
+# mkdir -p ~/.config-backup
+# [ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/
+# [ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/
+# [ -d ~/.config ] && cp -r ~/.config ~/.config-backup/
 
-# Copy shell configurations
-defaults write com.apple.finder QuitMenuItem -bool true
-defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-defaults write com.apple.finder AppleShowAllFiles -bool true
-defaults write com.apple.finder ShowPathbar -bool true
-defaults write com.apple.finder FXDefaultSearchScope -string SCcf
-defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
-defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false
-defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false
-defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
-defaults write com.apple.finder NewWindowTarget -string PfHm
-defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
-defaults write com.apple.finder QLEnableTextSelection -bool true
-defaults write com.apple.LaunchServices LSQuarantine -bool false
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtras -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
-defaults write com.apple.frameworks.diskimages skip-verify -bool true
-defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true
-defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true
-defaults write com.apple.CrashReporter DialogType -string none
-defaults write com.apple.AdLib forceLimitAdTracking -bool true
-defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false
-defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false
+# # Copy shell configurations
+# defaults write com.apple.finder QuitMenuItem -bool true
+# defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+# defaults write com.apple.finder AppleShowAllFiles -bool true
+# defaults write com.apple.finder ShowPathbar -bool true
+# defaults write com.apple.finder FXDefaultSearchScope -string SCcf
+# defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
+# defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false
+# defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false
+# defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
+# defaults write com.apple.finder NewWindowTarget -string PfHm
+# defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
+# defaults write com.apple.finder QLEnableTextSelection -bool true
+# defaults write com.apple.LaunchServices LSQuarantine -bool false
+# defaults write com.apple.Safari IncludeDevelopMenu -bool true
+# defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+# defaults write com.apple.Safari WebKitDeveloperExtras -bool true
+# defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+# defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
+# defaults write com.apple.frameworks.diskimages skip-verify -bool true
+# defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true
+# defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true
+# defaults write com.apple.CrashReporter DialogType -string none
+# defaults write com.apple.AdLib forceLimitAdTracking -bool true
+# defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false
+# defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false
 
 
 
@@ -129,7 +130,7 @@ export PATH
 EOF
 
 
-mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify-player}
+mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify-player} 2>/dev/null || true
 
 # Copy starship config
 cp "$SCRIPT_DIR/.config/starship.toml" ~/.config/starship.toml
@@ -173,7 +174,11 @@ if [ ! -f ~/.config/kitty/themes/catppuccin/macchiato.conf ]; then
 fi
 
 # Copy neofetch config
-cp "$SCRIPT_DIR/.config/neofetch/config.conf" ~/.config/neofetch/config.conf
+if [ ! -f ~/.config/neofetch/config.conf ]; then
+    cp "$SCRIPT_DIR/.config/neofetch/config.conf" ~/.config/neofetch/config.conf
+else
+    echo "$(cat "$SCRIPT_DIR/.config/neofetch/config.conf")" >> ~/.config/neofetch/config.conf
+fi
 
 
 

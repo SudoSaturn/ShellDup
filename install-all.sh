@@ -55,67 +55,115 @@ SHELLDUP_DIR="/tmp/shelldup-$$"
 KITTY_DIR="$SHELLDUP_DIR/kitty"
 KITTY_TEMP_DIR="/tmp/kitty-official-$$"
 
-# Allow override via environment variables
-if [ -n "$CUSTOM_SHELLDUP_REPO" ]; then
-    SHELLDUP_REPO_URL="$CUSTOM_SHELLDUP_REPO"
-fi
-if [ -n "$CUSTOM_SHELLDUP_BRANCH" ]; then
-    SHELLDUP_BRANCH="$CUSTOM_SHELLDUP_BRANCH"
-fi
+echo -e "${CYAN}[1/15]${NC} installing prerequisites..."
+brew install --quiet \
+    jless \
+    git \
+    starship \
+    cmake \
+    less \
+    gnu-sed \
+    wget \
+    zoxide \
+    eza \
+    fd \
+    fzf \
+    ripgrep \
+    dust \
+    tldr \
+    tig \
+    btop \
+    tree \
+    tmux \
+    hyperfine\
+    neovim \
+    neofetch \
+    yazi \
+    lazygit \
+    lazydocker \
+    nali \
+    aria2 \
+    apidog \
+    httpie \
+    nmap \
+    telnet \
+    bat \
+    spotify-player \
+    tv \
+    mise \
+    gh \
+    git \
+    node \
+    python \
+    rust \
+    go \
+    unar \
+    sevenzip \
+    brotli \
+    upx \
+    ffmpeg \
+    graphviz \
+    exiftool \
+    ffmpegthumbnailer \
+    jq \
+    jc \
+    hugo \
+    duti \
+    pipx \
+    rar
 
-echo -e "${CYAN}[1/15]${NC} Checking prerequisites..."
-if ! command -v git &> /dev/null; then
-    echo -e "${RED}Error: git is not installed${NC}"
-    echo "Install with: xcode-select --install"
-    exit 1
+brew tap oven-sh/bun
+brew install node pnpm bun
+brew install lua luarocks php composer
+composer global require psy/psysh
+pipx install git+https://github.com/ranger/ranger.git
+pipx inject ranger Pillow
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 fi
-if ! command -v go &> /dev/null; then
-    echo -e "${RED}Error: go is not installed${NC}"
-    echo "Install from: https://go.dev/dl/"
-    exit 1
-fi
+pipx upgrade-all
+mkdir -p ~/.config-backup
+[ -f ~/.zshrc ] && cp ~/.zshrc ~/.config-backup/
+[ -f ~/.zprofile ] && cp ~/.zprofile ~/.config-backup/
+[ -d ~/.config ] && cp -r ~/.config ~/.config-backup/
+
+# Copy shell configurations
+defaults write com.apple.finder QuitMenuItem -bool true
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+defaults write com.apple.finder AppleShowAllFiles -bool true
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder FXDefaultSearchScope -string SCcf
+defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false
+defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool false
+defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
+defaults write com.apple.finder NewWindowTarget -string PfHm
+defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
+defaults write com.apple.finder QLEnableTextSelection -bool true
+defaults write com.apple.LaunchServices LSQuarantine -bool false
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+defaults write com.apple.Safari WebKitDeveloperExtras -bool true
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
+defaults write com.apple.frameworks.diskimages skip-verify -bool true
+defaults write com.apple.frameworks.diskimages skip-verify-locked -bool true
+defaults write com.apple.frameworks.diskimages skip-verify-remote -bool true
+defaults write com.apple.CrashReporter DialogType -string none
+defaults write com.apple.AdLib forceLimitAdTracking -bool true
+defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false
+defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false
 echo -e "${GREEN}✓${NC} Prerequisites OK"
 
 echo ""
-echo -e "${CYAN}[2/15]${NC} Cloning ShellDup repository..."
+echo -e "${CYAN}[2/15]${NC} Cloning repository..."
 rm -rf "$SHELLDUP_DIR"
 git clone --depth 1 --branch "$SHELLDUP_BRANCH" "$SHELLDUP_REPO_URL" "$SHELLDUP_DIR" &>/dev/null || {
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
 }
 echo -e "${GREEN}✓${NC} Repository cloned"
-
-if [ ! -d "$KITTY_DIR" ]; then
-    echo -e "${RED}Error: kitty directory not found in ShellDup repository${NC}"
-    exit 1
-fi
-
-echo ""
-echo -e "${CYAN}[3/15]${NC} Cloning .github directory from official kitty repository..."
-rm -rf "$KITTY_TEMP_DIR"
-mkdir -p "$KITTY_TEMP_DIR"
-cd "$KITTY_TEMP_DIR"
-
-# Clone with sparse checkout to get only .github directory
-git clone --filter=blob:none --sparse https://github.com/kovidgoyal/kitty.git . &>/dev/null || {
-    echo -e "${RED}Error: Failed to clone official kitty repository${NC}"
-    exit 1
-}
-git sparse-checkout set .github &>/dev/null || {
-    echo -e "${RED}Error: Failed to set sparse checkout${NC}"
-    exit 1
-}
-
-# Copy .github directory to ShellDup kitty directory
-cp -r .github "$KITTY_DIR/" || {
-    echo -e "${RED}Error: Failed to copy .github directory${NC}"
-    exit 1
-}
-
-# Clean up temporary kitty clone
-cd /tmp
-rm -rf "$KITTY_TEMP_DIR"
-echo -e "${GREEN}✓${NC} .github directory added"
 
 cd "$KITTY_DIR" || exit 1
 
@@ -240,17 +288,71 @@ echo -e "${GREEN}✓${NC} Build files cleaned"
 
 echo ""
 echo -e "${CYAN}[15/15]${NC} Running setup script..."
-if [ ! -f "setup-duplicate.sh" ]; then
-    echo -e "${RED}Error: setup-duplicate.sh not found in ShellDup repository${NC}"
-    echo -e "${YELLOW}Repository contents:${NC}"
-    ls -la "$SHELLDUP_DIR"
-    exit 1
+
+
+# Copy .zshrc
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cp "$SCRIPT_DIR/.zshrc" ~/.zshrc
+
+# .zprofile
+cat > ~/.zprofile << 'EOF'
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+PATH="/Library/Frameworks/Python.framework/Versions/3.13/bin:${PATH}"
+export PATH
+EOF
+
+
+mkdir -p ~/.config/{starship,yazi,kitty,nvim,lazygit,tmux,btop,bat,neofetch,spotify-player} 2>/dev/null || true
+
+# Copy starship config
+cp "$SCRIPT_DIR/.config/starship.toml" ~/.config/starship.toml
+
+# Copy yazi configs
+cp -r "$SCRIPT_DIR/.config/yazi/"* ~/.config/yazi/
+
+# Copy kitty configs
+cp -r "$SCRIPT_DIR/.config/kitty/"* ~/.config/kitty/
+
+# JetBrains Mono Nerd Font
+brew install --cask font-jetbrains-mono-nerd-font
+
+# Copy lazygit config
+cp "$SCRIPT_DIR/.config/lazygit/config.yml" ~/.config/lazygit/config.yml
+
+
+if ! command -v mise &> /dev/null; then
+    curl https://mise.run | sh
 fi
 
-if ! bash setup-duplicate.sh; then
-    echo -e "${RED}Error: setup-duplicate.sh failed${NC}"
-    exit 1
+# Set up Git configuration
+# log "Setting up Git configuration..."
+git config --global init.defaultBranch main
+git config --global pull.rebase false
+
+mkdir -p ~/.zsh/completions
+
+#  Catppuccin themes for other stuff
+# log "Installing Catppuccin themes..."
+
+mkdir -p ~/.config/bat/themes
+if [ ! -f ~/.config/bat/themes/Catppuccin-macchiato.tmTheme ]; then
+    curl -s https://raw.githubusercontent.com/catppuccin/bat/main/Catppuccin-macchiato.tmTheme > ~/.config/bat/themes/Catppuccin-macchiato.tmTheme
+    bat cache --build
+
+mkdir -p ~/.config/kitty/themes/catppuccin
+if [ ! -f ~/.config/kitty/themes/catppuccin/macchiato.conf ]; then
+    curl -s https://raw.githubusercontent.com/catppuccin/kitty/main/macchiato.conf > ~/.config/kitty/themes/catppuccin/macchiato.conf
 fi
+
+# Copy neofetch config
+if [ ! -f ~/.config/neofetch/config.conf ]; then
+    cp "$SCRIPT_DIR/.config/neofetch/config.conf" ~/.config/neofetch/config.conf
+else
+    echo "$(cat "$SCRIPT_DIR/.config/neofetch/config.conf")" >> ~/.config/neofetch/config.conf
+fi
+
 echo -e "${GREEN}✓${NC} Setup complete"
 
 echo ""
@@ -266,8 +368,11 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Installation Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${YELLOW}To apply changes, run:${NC}"
-echo -e "${CYAN}  source ~/.zshrc${NC}"
-echo ""
-echo -e "${YELLOW}Or simply restart your terminal.${NC}"
-echo ""
+echo -e "${YELLOW}Applying changes...${NC}"
+sleep 2
+source ~/.zshrc 2>/dev/null || true
+
+if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/local/bin/zsh" ] && [ "$SHELL" != "/opt/homebrew/bin/zsh" ]; then
+    log "Setting zsh as default shell..."
+    chsh -s $(which zsh)
+fi
