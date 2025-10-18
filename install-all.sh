@@ -71,7 +71,7 @@ done
 
 composer global require psy/psysh 2>/dev/null || true
 pipx install git+https://github.com/ranger/ranger.git 2>/dev/null || true
-pipx inject ranger Pillow 2>/dev/null || true
+pipx inject ranger-fm Pillow 2>/dev/null || true
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || true
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
