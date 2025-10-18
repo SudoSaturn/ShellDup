@@ -88,7 +88,7 @@ brew install --quiet \
     nmap \
     telnet \
     bat \
-    spotify-player \
+    spotify_player \
     tv \
     mise \
     gh \
